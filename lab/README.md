@@ -63,3 +63,7 @@ One lane-M epic: a web page, a list endpoint and link titles from an external AP
 - A merge conflict.
 - `factory-spec`, `factory-design`, `factory-new` and `factory-setup` run by a fresh session, and a full `factory-adopt` followed by delivery on a real existing project.
 - A deploy beyond a local process.
+
+## Run 3: a real project (2026-11-19)
+
+Not a lab project: four independent issues from the backlog of a live Next.js product, run as a pass on an unpushed branch. Details are in CHANGELOG.md. What it added to the record: the review-bounce path ran twice on real code (once on a reviewer `fail`, once when the orchestrator promoted a suggestion to blocking), `factory-setup` and the worktree recipe held on an existing codebase, and QA validation in a browser found no defects after review. Still unexercised: a merge conflict, the attempt cap, a factory-performed deploy, and the spec and design stages on real work.

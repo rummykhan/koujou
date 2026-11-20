@@ -22,13 +22,18 @@ Read first: `FACTORY.md`, and in `~/.claude/skills/factory/reference/`: `beads.m
 
 Agents: use subagent types `factory-builder`, `factory-reviewer`, `factory-tester`, `factory-validator`. If they are not available in this session, use a general-purpose agent and start its prompt with "Read `~/.claude/agents/factory/factory-<role>.md` and take that role." (Newly installed agent types only register when a session starts.)
 
+## What a run works on
+
+Usually one epic. When the work is picked from an existing backlog and spans several epics, it is a **pass**: label the chosen issues `factory:pass-<n>` (after `factory-plan` has given each its criteria, lane and dependencies), use `--label factory:pass-<n>` wherever this skill says `--parent <epic>`, and name the branch `factory/pass-<n>`. Leave the issues in the epics they belong to.
+
 ## 0. Preflight
 
 Stop and tell the user if any of these fails; a run started on a bad footing wastes every agent after it.
 
 - The epic's plan was approved, `bd lint` is clean for its issues, and `bd swarm validate <epic>` reports it swarmable.
-- The working tree is clean and you are on the base branch from the profile.
-- Create the epic branch `factory/<epic-id>` from base (task branches are `factory-task/<task-id>`; git cannot hold a branch named inside another branch's name, so they must not nest) and run the gate on it. It must be green: this is the baseline that lets you attribute later failures.
+- You have a checkout of your own to merge in. If the user is working in the main checkout, or the base branch deploys, leave theirs alone: `git fetch`, then add a worktree for the epic branch cut from the remote base (`git worktree add <worktree-root>/_epic -b factory/<epic-id> origin/<base>`), and orchestrate from there.
+- The working tree is clean.
+- Create the epic branch `factory/<epic-id>` from the up-to-date base (task branches are `factory-task/<task-id>`; git cannot hold a branch named inside another branch's name, so they must not nest) and run the gate on it. It must be green: this is the baseline that lets you attribute later failures.
 - You know the deploy policy and the validation target.
 - Prerequisites are settled: every row in the requirements' `## Prerequisites` table is `provided` (and verified), or sits behind a `factory:needs-user` gate, or is marked for the next pass. If you can see a need the table missed (the tasks mention a service nobody has credentials for), ask the user now, in one batch, before any agent starts.
 
@@ -53,7 +58,7 @@ git worktree add <worktree-root>/<task> -b factory-task/<task> factory/<epic>
 
 The epic's QA task (label `qa`) is part of the first wave: it goes to a `factory-tester`, not a builder, with the requirements file and the profile's QA section in its brief. Its branch is reviewed and merged like any other. The suite describes the finished epic, so it stays red on the epic branch until the tasks it covers, usually ending with the wiring task, are merged: run the unit gate after each merge, and the full gate including the suite once they are all in. A suite test that still fails then is a bug to triage (step 4) before validation even starts.
 
-**c. Spawn the builders, all in one message** so they run in parallel. Each brief contains: the task id; the absolute worktree path and branch, with an instruction to work only there whatever directory its environment reports; the path to `FACTORY.md`; the path to the swarm protocol; one line per sibling in this wave (id, title, lane) so the builder knows who is nearby; a distinct port or database suffix if the project runs local services; and on a retry, the reviewer's findings verbatim. Do not paste the task text; the builder reads it from beads.
+**c. Spawn the builders, all in one message** so they run in parallel. Each brief contains: the task id; the absolute worktree path and branch, with an instruction to work only there whatever directory its environment reports; the path to `FACTORY.md`; the path to the swarm protocol; one line per sibling in this wave (id, title, lane) so the builder knows who is nearby; a distinct port or database suffix if the project runs local services; a scratch folder of its own for throwaway scripts (workers share the machine's temp space, and one worker's `seed.ts` has overwritten another's); and on a retry, the reviewer's findings verbatim. Do not paste the task text; the builder reads it from beads.
 
 **d. As each builder reports**, read the mailboxes of the tasks in flight (`bd comments <id>`) and act on anything addressed to you: relay an urgent message to a running builder, settle a contract question, or add a dependency.
 
@@ -64,7 +69,7 @@ The epic's QA task (label `qa`) is part of the first wave: it goes to a `factory
 **e. On the reviewer's verdict.**
 
 - **fail** → read `fix_attempts` from `bd show <task> --json`, add one, `bd update <task> --set-metadata fix_attempts=<n> --append-notes "review <n>: <one-line summary>"`. If `n` is below the cap, continue the same builder with the blocking findings (its context is still useful) or spawn a fresh one in the same worktree if it has gone in circles. Then review again. At the cap → *Stuck*.
-- **pass** → merge. File the reviewer's `follow_ups` and the builder's `discovered` items as beads (see *Triage*).
+- **pass** → read the reviewer's suggestions before merging. A reviewer sometimes files a real defect as a suggestion because it could not reproduce it locally (behaviour that differs in production: consistency, limits, concurrency, scale). If a suggestion describes wrong behaviour for real users, send the task back as if it had failed; otherwise merge. File the reviewer's `follow_ups` and the builder's `discovered` items as beads (see *Triage*).
 
 **f. Merge, one branch at a time.**
 
@@ -82,6 +87,8 @@ git worktree remove --force <worktree-root>/<task> && git branch -d factory-task
 ```
 
 Closing unblocks dependents, which form the next wave.
+
+When the tracker is shared with people and the work only becomes real for them once the user merges the branch (the profile's integration is a pull request the user merges), don't close issues that are not on the base branch yet. Leave each in progress with the label `factory:awaiting-merge` and notes saying what was built and reviewed; tell the user to close them on merge. Make beads writes with `--sandbox` so nothing reaches the team's tracker until the user pushes it. Within the run, treat `factory:awaiting-merge` as done when deciding what is ready.
 
 ### Stuck
 
@@ -142,6 +149,7 @@ Only when every child is closed and the last validation passed:
 - Write `report.md` in the work order: what shipped by requirement; evidence (gate result, validator verdict, commit, evidence files); **waiting on you** (open `factory:needs-user` items: what is needed, where to put it, what it unblocks); deferred items with ids; stuck items; rounds used; anything built against a fake; anything not verified.
 - `bd epic close-eligible` or `bd close <epic> --reason "<summary> | evidence: validator pass at <sha> | residue: <deferred ids>"`.
 - Hand over per the git policy: PR, or the branch name for the user to merge.
+- Clean up what the run created on the machine: task worktrees and branches, servers you started, and test databases or tables made for the run. Leave the epic branch, its worktree if the user's checkout was left alone, and anything that existed before.
 
 If stuck tasks remain, the epic stays open. Report it as partially delivered with exactly what is and is not in the branch.
 

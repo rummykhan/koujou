@@ -47,3 +47,24 @@ Worked as designed, kept:
 Cost note (one run, not acted on): the QA tester and the reviewer of its suite each built a throwaway reference implementation, about 12 minutes each. Worth it here; revisit if it recurs on larger epics.
 
 Also in this pass: `koujou init` / `doctor` CLI, one-line installer, `/factory-setup`, and the living system design in `AGENTS.md`.
+
+## 2026-11-19 — first run on a real project (a Next.js product with DynamoDB; four backlog issues as a pass)
+
+Result: four issues built in parallel worktrees, 6 reviews, 2 bounces, validation passed in round 1; 111 → 144 tests; one real security bug found and fixed as a side effect of writing route tests. Nothing pushed; the user merges.
+
+Earlier entries checked against this run:
+- Review bounce and `fix_attempts` — **first evidence**: two tasks went back to their builders (one failed review, one sent back by the orchestrator) and both passed on the second review. The cap itself was not reached.
+- Validator verdict rests on user-observable criteria — **confirmed** (a clean `pass`, with how-it-was-built criteria listed as checked elsewhere).
+- A task that changes an asserted shape owns the tests pinning it — **confirmed** (the paging task's lane included the existing store test; no `shared_files`).
+- Reviewer runs the real entry point — **confirmed** (two reviewers started a production build).
+- `factory-adopt` improvements (prove the worktree recipe, run the gate twice) — **confirmed** by doing them: a fresh worktree passed the gate twice with its own table prefix before any builder started.
+
+Changed:
+- **skills/factory-run**: a run can be a *pass* (a labelled set of backlog issues across epics) — because the four issues belonged to three different epics and the skill only knew `--parent`.
+- **skills/factory-run**: the orchestrator works in its own worktree cut from the remote base — because the user's checkout was 14 commits behind and a push to its base branch deploys. Expected effect: the user's checkout is never switched or dirtied by a run.
+- **skills/factory-run**: on a shared tracker where the user merges, issues stay in progress with `factory:awaiting-merge` and writes use `--sandbox` — because closing them would have told a second person the work was live.
+- **skills/factory-run**, **agents/factory-reviewer**: a production-only defect is blocking even if it cannot be reproduced locally, and the orchestrator reads suggestions before merging — because the first review of the session task passed with the real defect (a stale read after a write on real DynamoDB) filed as a suggestion. Expected effect: such findings arrive as `fail`.
+- **agents/factory-reviewer**: when a test or helper changes, check what it used to prove — because a retrying test helper would have let a publisher that skips ticks pass; the reviewer caught it by mutation. Kept and made explicit.
+- **skills/factory-run**: each worker gets its own scratch folder; the run cleans up worktrees, servers and test tables at the end — because two workers overwrote each other's `seed.ts`, and the run left 204 test tables in the local database.
+
+Still no evidence: a merge conflict between task branches; the stuck path at the attempt cap; a deploy performed by the factory; `factory-spec` and `factory-design` on real work (this pass started from existing issues).

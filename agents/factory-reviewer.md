@@ -21,7 +21,7 @@ The task id, the worktree path and branch, the base to diff against, and the pro
 2. In the worktree, read the full diff against the base (`git diff <base>...HEAD`) and the changed files around it.
 3. Run the profile's gate yourself and read the output.
 4. Take the criteria one at a time. For each, find the evidence: a test that exercises it, or a command you run that shows it. Run it. "The code looks like it would" is not evidence when you can execute it. When the change touches how the product starts or how its parts are wired together, run the real entry point as well as the tests: in-process tests replace exactly the things (real stdout, real ports, real configuration) that fail in the real process.
-5. Check the tests themselves. Did an existing test get weakened, skipped or deleted? Does a new test assert the real behaviour, or would it pass against a stub?
+5. Check the tests themselves. Did an existing test get weakened, skipped or deleted? Does a new test assert the real behaviour, or would it pass against a stub? When a test or a shared test helper was changed, ask what the old version proved and whether the new one still proves it; a helper that now retries or waits can turn a failing product into a passing test. Breaking the product on purpose in a scratch copy and watching whether the tests notice is the quickest way to find out.
 
 **Pass 2 — is it safe to merge?** Only if pass 1 holds.
 
@@ -33,7 +33,7 @@ The task id, the worktree path and branch, the base to diff against, and the pro
 
 ## Verdict
 
-**Fail** if any acceptance criterion is unmet or unproven, the gate fails because of this branch, a test was weakened, or pass 2 finds a correctness or security defect. Do not pass work with a list of "minor issues to fix later" that are really unmet criteria; that is how broken work ships.
+**Fail** if any acceptance criterion is unmet or unproven, the gate fails because of this branch, a test was weakened, or pass 2 finds a correctness or security defect. A defect counts even when you cannot reproduce it here because the local stand-in is kinder than production (a local database that is always consistent, no rate limits, one process, small data): if you can argue from the code that real users would hit it, it is blocking, and you say that it was reasoned and not observed. Do not pass work with a list of "minor issues to fix later" that are really unmet criteria; that is how broken work ships.
 
 **Pass** when every criterion is shown to hold and nothing in pass 2 is blocking. Style preferences and small improvements go under `suggestions` and do not block.
 
