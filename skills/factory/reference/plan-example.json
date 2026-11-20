@@ -1,0 +1,46 @@
+{
+  "nodes": [
+    {
+      "key": "epic",
+      "title": "Users can export their posts as CSV",
+      "type": "epic",
+      "priority": 2,
+      "description": "Serves R1-R3 in docs/factory/csv-export/requirements.md.\n\n## Success Criteria\n- A signed-in user downloads a CSV of their posts from the Posts page\n- The file opens in Excel and Google Sheets with correct columns and encoding\n- Export of 10k posts completes in under 10s",
+      "design": "Streamed response from a new route handler; no new storage. See design.md §3."
+    },
+    {
+      "key": "serializer",
+      "title": "CSV serializer for posts",
+      "type": "task",
+      "parent_key": "epic",
+      "priority": 2,
+      "description": "Pure function turning Post[] into RFC 4180 CSV. Serves R2.",
+      "acceptance_criteria": "- Columns: id, title, status, scheduled_at, channel\n- Commas, quotes and newlines in titles are escaped\n- UTF-8 with BOM\n- Unit tests cover empty list, escaping, unicode",
+      "design": "New file src/lib/export/csv.ts + test. No other files."
+    },
+    {
+      "key": "route",
+      "title": "GET /api/posts/export streams the user's posts as CSV",
+      "type": "task",
+      "parent_key": "epic",
+      "priority": 2,
+      "description": "Authenticated route using the serializer. Serves R1, R3.",
+      "acceptance_criteria": "- 401 when signed out\n- Only the caller's posts are returned\n- Content-Disposition sets a dated filename\n- Integration test covers auth and ownership",
+      "design": "src/app/api/posts/export/route.ts. Reads through the existing post repository."
+    },
+    {
+      "key": "button",
+      "title": "Export button on the Posts page",
+      "type": "task",
+      "parent_key": "epic",
+      "priority": 2,
+      "description": "Button that triggers the download. Serves R1.",
+      "acceptance_criteria": "- Button visible on /posts for signed-in users\n- Click downloads the file\n- Disabled with a tooltip when the user has no posts",
+      "design": "src/app/posts/page.tsx and its toolbar component."
+    }
+  ],
+  "edges": [
+    { "from_key": "route", "to_key": "serializer", "type": "blocks" },
+    { "from_key": "button", "to_key": "route", "type": "blocks" }
+  ]
+}
