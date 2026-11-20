@@ -16,7 +16,7 @@
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/flow-dark.svg">
-  <img alt="Koujou pipeline: plan with your approval at each step, then a delivery loop of build, review, merge, deploy, validate and triage, ending in a retro" src="docs/flow-light.svg">
+  <img alt="Koujou pipeline: plan with your approval at each step, then a delivery loop of build, review, merge queue, security review, validate and triage, shipped by pull request and followed by a retro" src="docs/flow-light.svg">
 </picture>
 
 ## ⚡ Quick Start
@@ -44,7 +44,7 @@ Then give it work:
 
 **Note:** Koujou is installed once and used everywhere. You don't clone this repository into your project.
 
-`koujou init` is instant and commits nothing. It creates `.beads/` (the task database), `FACTORY.md` (the project profile), a factory block in `AGENTS.md` (how work gets done, plus the living system design), and makes `CLAUDE.md` import `AGENTS.md`. `/factory-setup` then reads your code, proves your test gate, and fills those files in.
+`koujou init` is instant. Beads makes one commit for its own files when it is first set up; everything koujou adds is left uncommitted for you to review. It creates `.beads/` (the task database), `FACTORY.md` (the project profile), a factory block in `AGENTS.md` (how work gets done, plus the living system design), and makes `CLAUDE.md` import `AGENTS.md`. `/factory-setup` then reads your code, proves your test gate, and fills those files in.
 
 ## 🤖 Installing with an agent
 
@@ -71,10 +71,15 @@ koujou update
 ## 🛠 Features
 
 * **Idea to shipped:** requirements, system design, epics and tasks, build, review, QA, deploy, validation, bug triage.
-* **Swarm in worktrees:** independent tasks are built at the same time, each agent in its own git worktree; the orchestrator merges one branch at a time.
-* **Nobody grades their own work:** a separate reviewer checks every task against acceptance criteria written before the code.
-* **QA department:** a test engineer writes the acceptance suite from the requirements (Playwright for UIs); a validator uses the running product in a real browser and saves evidence.
-* **You are asked once:** API keys, access and decisions are requested up front, in one batch. What you can't provide is built against a fake and listed under "Waiting on you".
+* **Swarm in worktrees:** independent tasks are built at the same time, each agent in its own git worktree.
+* **Merge queue:** finished branches land one at a time; the others rebase onto the result, and the agent that wrote a change resolves its own conflicts.
+* **Security team:** before validation, several agents read the whole change, each through one lens: access, untrusted input, data exposure. Confirmed holes are fixed before anything ships.
+* **Acceptance tests close tasks:** every task's criteria name their checks before any code exists, and its tests carry the task id, so `koujou accept <task>` proves it done, at review, at landing and again before shipping.
+* **Nobody grades their own work:** a separate reviewer checks every task against those criteria.
+* **QA department:** a test engineer writes the acceptance suite from the requirements (Playwright for UIs); a validator uses the running product in a real browser and saves evidence. Everything is validated on a local build, so you need no cloud account; a deployed test environment is optional.
+* **Ships by pull request:** the factory pushes the branch, opens the PR, waits for CI, merges when you approve, then checks the deploy and closes the issues.
+* **Knows where the time went:** every task's build, review and queue time is recorded in beads; `koujou times` adds it up.
+* **You are asked once:** API keys, access and decisions are requested up front, in one batch, including when the work comes from your existing backlog. What you can't provide is built against a fake and listed under "Waiting on you".
 * **Loops are capped:** a task that keeps failing review, or an epic that keeps failing validation, stops and comes to you instead of burning tokens.
 * **Living system design:** `AGENTS.md` holds an as-built description of your system, rewritten whenever an epic ships.
 * **Self-improving:** every epic ends with a retro that edits the factory's own skills and worker instructions, logged in [`CHANGELOG.md`](CHANGELOG.md).
@@ -88,6 +93,8 @@ In your terminal:
 | --- | --- |
 | `koujou init` | Wire the current project: beads, `FACTORY.md`, `AGENTS.md`, `CLAUDE.md`. |
 | `koujou doctor` | Check the installation and the current project. |
+| `koujou accept <task-id>` | Run a task's acceptance tests (or `--parent <epic-id>` for all of an epic's). |
+| `koujou times <epic-id>` | Time per task (build, review, queue), bounces, rebases and agents used. |
 | `koujou update` | Pull the latest koujou and relink. |
 | `koujou uninstall` | Remove the links. Beads and your projects are untouched. |
 
@@ -100,7 +107,8 @@ In Claude Code:
 | `/factory-spec` | Raw request → testable requirements. |
 | `/factory-design` | Requirements → system design. |
 | `/factory-plan` | Design → epics and a task graph in beads. |
-| `/factory-run <epic-id>` | The delivery loop: build, review, merge, deploy, validate, triage. |
+| `/factory-run <epic-id>` | The delivery loop: build, review, merge queue, security review, validate, triage. |
+| `/factory-ship` | Pull request, CI, merge with your approval, deploy check, close the issues. |
 | `/factory-retro` | Learn from the run and improve the factory. |
 
 ## 🔄 How a run goes
@@ -123,11 +131,11 @@ Wave 2: 1 issues
 Max parallelism: 3
 ```
 
-**3. The swarm builds.** Each ready task gets a worktree and a builder; a QA tester writes acceptance tests alongside. Reviewers pass or bounce each branch; passing branches are merged one at a time.
+**3. The swarm builds.** Each ready task gets a worktree and a builder; a QA tester writes acceptance tests alongside. Reviewers pass or bounce each branch; passing branches land one at a time, and the rest rebase.
 
-**4. QA validates.** The acceptance suite runs, then a validator uses the real product. Bugs are triaged: fix now (back into the loop) or defer to the next phase.
+**4. Security and QA.** A security team reads the whole change. Then the acceptance suite runs and a validator uses the real product, locally. Bugs are triaged: fix now (back into the loop) or defer to the next phase.
 
-**5. You get a report.** What shipped, the evidence, what was deferred, and what is waiting on you.
+**5. It ships.** You get a report (what was built, the evidence, the time it took, what was deferred, what is waiting on you) and a pull request. Approve, and the factory merges it and checks the deploy.
 
 See what's happening at any time:
 
@@ -146,6 +154,7 @@ bd list --label factory:needs-user --status open
 | **Orchestrator** | Your Claude Code session. Briefs agents, merges, records state in beads, talks to you. |
 | `factory-builder` | Implements one task in its own worktree. |
 | `factory-reviewer` | Independently checks a task against its acceptance criteria. Read-only. |
+| `factory-security` | Several at once, each hunting exploitable defects through one lens. Read-only. |
 | `factory-tester` | QA. Writes the automated acceptance suite from the requirements. |
 | `factory-validator` | QA. Exercises the running product like a user. |
 
@@ -160,7 +169,24 @@ Workers coordinate through a per-task mailbox (beads comments) and never touch e
 | [`agents/`](agents) | The worker definitions. |
 | [`bin/koujou`](bin/koujou) | The CLI. |
 | [`CHANGELOG.md`](CHANGELOG.md) | What the factory changed about itself, and why. |
+| [`tests/`](tests) | The factory's own tests: static checks, CLI tests, and agent scenarios. |
 | [`lab/`](lab) | Notes from the test runs the factory was developed against. |
+
+## 🤝 Contributing
+
+The factory is tested like software. Before opening a pull request:
+
+```bash
+tests/run.sh
+```
+
+That runs the static checks and the CLI tests in a few seconds, with no model. If you changed a skill or a worker, open Claude Code in this repository and run the scenarios for it:
+
+```text
+/factory-test
+```
+
+A new rule comes with a scenario that fails without it. [`tests/README.md`](tests/README.md) explains how the tests are designed and how to add one.
 
 ## ✅ Requirements
 
@@ -170,7 +196,7 @@ Workers coordinate through a per-task mailbox (beads comments) and never touch e
 
 ## 🧪 Status
 
-Koujou is new. It has delivered two epics end to end in a lab project (an API, then a web UI with a Playwright suite). Not yet exercised: a deploy beyond a local process, and a full delivery on a large existing codebase. See [`lab/README.md`](lab/README.md) for exactly what has and has not been tested.
+Koujou is new. It has delivered two epics and a six-issue backlog pass end to end in a lab project (through a pull request, CI and merge), and four backlog issues on a live Next.js product. Not yet exercised: a deploy performed by the factory, validation of a deployed environment, and the requirements and design stages on a large existing codebase. See [`lab/README.md`](lab/README.md) for exactly what has and has not been tested.
 
 ## 📝 License
 

@@ -8,13 +8,13 @@ Anything outside the repo that the work needs and an agent cannot produce:
 
 - **Credentials and access** — API keys, OAuth client ids, cloud profiles, repo or registry permissions, test accounts, webhook secrets
 - **External setup** — a third-party app registration, a domain or DNS record, a billing plan, a sandbox tenant, an allow-listed IP
-- **Decisions** — a product or pricing choice, anything that spends money or is hard to reverse, a legal or brand call
+- **Decisions** — a product or pricing choice, anything that spends money or is hard to reverse, a legal or brand call, and any behaviour the issue leaves open where the options differ in security or in what users are promised (which hosts a redirect may go to; whether one part of the system may write another's data)
 - **Assets and data** — logos, copy, sample files, a data export, a schema from another team
 - **People** — a manual step only the user can do (approve an app, click a confirmation email, sign in once with a real account)
 
 ## Stage 1: sweep for them up front
 
-`factory-spec` and `factory-design` each end with a prerequisite sweep. Go through the requirements and design and ask of every external touchpoint: what does this need that we do not have? Check what already exists before asking (env files by variable *name*, secret managers the profile mentions, existing config). Record the result in the requirements under `## Prerequisites`:
+`factory-spec` and `factory-design` each end with a prerequisite sweep. A pass picked from an existing backlog skips both stages, so `factory-plan` runs the same sweep as its intake, with one scout per issue, and records it in the pass's `intake.md`. Go through the requirements and design and ask of every external touchpoint: what does this need that we do not have? Check what already exists before asking (env files by variable *name*, secret managers the profile mentions, existing config). Record the result in the requirements under `## Prerequisites`:
 
 | # | What | Needed by | Why | Status | If unavailable |
 |---|---|---|---|---|---|

@@ -38,9 +38,16 @@ Typical messages: "I need `parseSchedule()` to accept a timezone argument — ar
 - A request that changes a shared contract is the orchestrator's call: it updates the design, tells every affected builder, and adds a dependency if the tasks can no longer run side by side.
 - Two builders that disagree do not negotiate in a loop. One round of messages, then the orchestrator decides.
 
-## 5. Merging is serial
+## 5. The merge queue: one lands, the others rebase
 
-Builders never merge, rebase onto each other, or push. The orchestrator merges accepted task branches into the epic branch one at a time and runs the gate on the result. A branch that conflicts goes back to its builder with the conflict and the current epic branch to rebase onto; that counts as a fix attempt.
+Lanes make conflicts rare, not impossible: two tasks meet in a route table, a shared type, a lockfile. So every builder works as if the epic branch will move under it, because it will.
+
+- **One branch lands at a time.** The orchestrator lands accepted branches on the epic branch in the order their reviews passed, each rebased onto the current epic branch and gated before it goes in. Builders never merge, never push, and never rebase onto a sibling's branch.
+- **You are told when the epic branch moves.** After each landing the orchestrator posts to the mailbox of every task still in flight: which task landed, at which commit, touching which files.
+- **Rebase your own branch onto the epic branch** (`git rebase factory/<epic>`, the one rebase a builder may do) when a landing touched files you also changed or code you call, and always once more before you report done. Then run the gate again: a rebase that applies cleanly can still break behaviour.
+- **Resolving a conflict.** Read the other side before choosing: `git log -p factory/<epic> -- <file>` shows what landed and its commit names the task; `bd show <that-task>` says what it was meant to do. Keep both behaviours. Never resolve by taking your side wholesale, deleting the other task's code or loosening its tests. If the two changes cannot both hold (they implement the shared contract differently), stop: post to the other task's mailbox and to your own for the orchestrator, and report it under `needs`. That is a contract question, and the orchestrator decides it.
+- **Say what you resolved.** List conflicted files and how you resolved each under `conflicts` in your report; the reviewer checks exactly those.
+- A branch sent back from the queue because it conflicted is counted in `rebases`, not as a failed review.
 
 ## 6. Shared machine resources
 

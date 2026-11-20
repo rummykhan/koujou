@@ -9,7 +9,7 @@ def build(c):
     W, H = 1200, 560
     o = []
     a = o.append
-    a(f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" width="{W}" height="{H}" role="img" aria-label="Koujou pipeline: raw idea, requirements, design and plan with your approval at each step; then a delivery loop of build, review, merge, deploy, validate and triage that repeats until shipped, followed by a retro.">')
+    a(f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" width="{W}" height="{H}" role="img" aria-label="Koujou pipeline: raw idea, requirements, design and plan with your approval at each step; then a delivery loop of build, review, merge queue, security review, validate and triage that repeats until shipped by pull request, followed by a retro.">')
     a(f'''<defs>
 <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="{c['line']}"/></marker>
 <marker id="ahb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="{c['blue']}"/></marker>
@@ -63,8 +63,8 @@ text{{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans",Helvet
     line(f'M{bcx} 214V{y2-5}', color=c['blue'], marker='ahb')
     a(f'<text class="h" x="{bcx+18}" y="244">DELIVERY LOOP</text>')
     a(f'<text class="m" x="{bcx+140}" y="244">/factory-run</text>')
-    r2 = [('Build','parallel worktrees',None),('Review','independent agent',None),('Merge','one at a time',None),('Deploy','per your policy',None),
-          ('Validate','QA · real browser',c['purple']),('Triage','sort the bugs',None),('Shipped','report + evidence',c['green'])]
+    r2 = [('Build','parallel worktrees',None),('Review','independent agent',None),('Merge','one lands, rest rebase',None),('Security','3 agents, 3 lenses',None),
+          ('Validate','QA · real browser',c['purple']),('Triage','sort the bugs',None),('Ship','PR · merge · deploy',c['green'])]
     for (t,s,acc),x in zip(r2,xs2): box(x,y2,w2,h2,t,s,False,acc)
     # build <-> review
     line(f'M{xs2[0]+w2+4} {y2+h2/2-9}H{xs2[1]-5}')

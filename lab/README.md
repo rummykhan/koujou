@@ -67,3 +67,28 @@ One lane-M epic: a web page, a list endpoint and link titles from an external AP
 ## Run 3: a real project (2026-11-19)
 
 Not a lab project: four independent issues from the backlog of a live Next.js product, run as a pass on an unpushed branch. Details are in CHANGELOG.md. What it added to the record: the review-bounce path ran twice on real code (once on a reviewer `fail`, once when the orchestrator promoted a suggestion to blocking), `factory-setup` and the worktree recipe held on an existing codebase, and QA validation in a browser found no defects after review. Still unexercised: a merge conflict, the attempt cap, a factory-performed deploy, and the spec and design stages on real work.
+
+## Run 4: a backlog pass with overlapping lanes, shipped by pull request (2026-11-20)
+
+Six linklab backlog issues as a pass, with the dependencies between overlapping lanes left out on purpose so branches would collide. Pushed to a private GitHub repository to exercise `factory-ship`.
+
+**Result:** five issues plus one bug found in validation shipped through PR, CI and merge; one issue held back behind a decision gate. 40 m 54 s from first claim to merged, 33 agent runs (6 scouts, 7 builder runs, 9 reviews, 6 security reviews, 2 validations, 3 rebase or re-check runs). 131 unit tests and 65 browser tests.
+
+| Stage | Exercised | Outcome |
+|---|---|---|
+| Pass intake | One scout per issue, `intake.md`, decisions with defaults, questions with none | Two security decisions surfaced before any code; one issue gated, none asked late |
+| Merge queue | Three branches editing `public/app.js`, two editing `src/server.js` | One conflict in the queue, sent back and resolved by its builder in 34 s; one builder rebased itself twice from mailbox notices and resolved five conflicts before review; no conflict resolved by the orchestrator |
+| Conflict-resolution review | Reviewer given only the conflicted files and the sibling task | Confirmed nothing dropped, 32 s |
+| Security review | One agent on each `security` task; three lenses on the assembled change | High finding (clickjacking on the new Delete button, with a working exploit) on a branch the ordinary reviewer had passed; fixed and re-verified. Four lesser findings logged |
+| Review bounce | Security `fail` counted as a failed review | Fixed on attempt 1 of 3 |
+| Validation and fix loop | Round 1 found a data-loss bug; fix-now through the wave; round 2 targeted | Fixed and confirmed in 20 of 20 runs; five minor bugs deferred |
+| Acceptance commands | Added mid-run; used on the fix-now bug | Red ("No tests found") before the fix, 7 tests green after; reviewer confirmed 3 fail with the fix reverted |
+| Time | `koujou times` | Per-task build, review and queue times; run totals |
+| Ship | Push, pull request, GitHub Actions, merge, close issues, clean up | Worked first time |
+
+### Still not exercised with real agents
+
+- The stuck path at the attempt cap, and a conflict whose two sides cannot both hold.
+- `factory-spec`, `factory-design` and `factory-new` on real work.
+- A deploy performed by the factory, and validation of a deployed environment.
+- Acceptance commands from the plan stage onward (here they were added part-way; three of six tasks have none).

@@ -10,11 +10,11 @@ A pipeline that turns a raw idea into shipped, validated work on any project. Be
 ## Pipeline
 
 ```
-raw idea ──► requirements ──► design ──► plan (epic + task graph in beads) ──► delivery loop ──► shipped
-            factory-spec     factory-design   factory-plan                     factory-run
-              ▲ gate           ▲ gate           ▲ gate                          ▲ deploy gate
-                                                                                      │
-                                             factory improves itself ◄── factory-retro ┘
+raw idea ──► requirements ──► design ──► plan (epic + task graph in beads) ──► delivery loop ──► ship ──► shipped
+            factory-spec     factory-design   factory-plan                     factory-run      factory-ship
+              ▲ gate           ▲ gate           ▲ gate                                            ▲ merge gate
+                                                                                                    │
+                                                           factory improves itself ◄── factory-retro ┘
 ```
 
 Project setup comes first, once per project: `factory-setup`. It initialises beads, writes `FACTORY.md` (the project profile every other stage reads), and puts the factory block in `AGENTS.md`, which carries the living system design. It follows `factory-adopt` for an existing codebase and `factory-new` for a greenfield one.
@@ -34,6 +34,7 @@ Ceremony should match risk. Pick the smallest lane that fits and tell the user w
 | Lane | Fits | Stages |
 |---|---|---|
 | **S** | A bug, or a change with one obvious implementation, touching one area | One bead with acceptance criteria → `factory-run` on that bead |
+| **Pass** | Several existing backlog issues, possibly from different epics | `factory-plan` intake (scout, ask once) → `factory-run --label factory:pass-<n>` |
 | **M** | A feature in existing architecture; a few tasks; no new components, data stores or external services | `factory-spec` → `factory-plan` (design notes go in the epic's design field) → `factory-run` |
 | **L** | New product, new subsystem, a new data model or integration, or anything expensive to undo | `factory-spec` → `factory-design` → `factory-plan` → `factory-run` |
 
@@ -49,7 +50,9 @@ One folder per work order, at the path `FACTORY.md` gives (default `docs/factory
 | `requirements.md` | factory-spec | Goals, non-goals, users, numbered requirements each with acceptance criteria, open questions |
 | `design.md` | factory-design | Architecture, data model, interfaces, decisions with alternatives, risks, test and rollout strategy |
 | `plan.json` | factory-plan | The epic and task graph, in `bd create --graph` format |
-| `report.md` | factory-run | What shipped, evidence, deferred bugs, stuck items, what is waiting on the user |
+| `intake.md` | factory-plan | For a pass picked from the backlog, in place of requirements: the issues, prerequisites, decisions with defaults, what cannot be verified locally |
+| `security.md` | factory-run | What the security review covered and found, and what happened to each finding |
+| `report.md` | factory-run | What shipped, evidence, time taken, deferred bugs, stuck items, what is waiting on the user |
 | `evidence/` | factory-validator | Screenshots, response captures, logs behind the validation verdict |
 | `retro.md` | factory-retro | What the run taught and what the factory changed about itself |
 
@@ -64,6 +67,7 @@ If the project already has homes for these (a `REQUIREMENTS.md`, a specs folder,
 | Orchestrator | This session | Merges only | Yes — the only writer |
 | `factory-builder` | Subagent, one per task, in its own worktree | Yes | No |
 | `factory-reviewer` | Subagent, fresh context per review | No | No |
+| `factory-security` | Subagents, several at once, each reading the assembled change through one lens (access, input, exposure) | No | No |
 | `factory-tester` (QA) | Subagent, writes the automated acceptance suite from the requirements, in its own worktree | Tests only | No |
 | `factory-validator` (QA) | Subagent, black-box against the running product, in a real browser for UIs | No | No |
 
@@ -85,8 +89,9 @@ Full detail and command recipes are in `~/.claude/skills/factory/reference/beads
 
 - An **epic** is the unit of delivery; **tasks** are its children; **bugs** found during the run are children too (fix now) or parentless with `factory:deferred` (next phase).
 - Dependencies mean "cannot start until", never "I'd do this first". Two tasks that would edit the same files get a dependency between them, so everything `bd ready` returns together is safe to build in parallel.
-- Every task carries acceptance criteria that an outsider could check. `bd lint` enforces the sections.
-- Loop counters live in metadata: `fix_attempts` on a task, `validate_rounds` on an epic. Limits come from `FACTORY.md`.
+- Every task carries acceptance criteria that each name their check, and one acceptance command (metadata `accept`) that runs the task's own tests, named with its id. `koujou accept <id>` runs it; it is what closes the task. `bd lint` enforces the sections.
+- Loop counters live in metadata: `fix_attempts` and `rebases` on a task, `validate_rounds` on an epic. Limits come from `FACTORY.md`.
+- Time lives there too: beads stamps claim and close, the run stamps built, reviewed, merged, validated and shipped. `koujou times <epic-id>` adds it up.
 - A close reason records what shipped, the evidence, and any residue.
 
 ## Status

@@ -1,0 +1,21 @@
+name: test
+on:
+  pull_request:
+  push:
+    branches: [main]
+jobs:
+  deterministic:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Static checks
+        run: tests/run.sh static
+      - name: Install beads
+        run: npm install -g @beads/bd && bd version
+      - name: CLI tests and scenario setups
+        run: |
+          git config --global user.name "ci" && git config --global user.email "ci@koujou.invalid"
+          tests/run.sh cli && tests/run.sh setups

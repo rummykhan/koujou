@@ -1,0 +1,12 @@
+{
+  "name": "todo-fixture",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node src/main.js",
+    "lint": "for f in src/*.js test/*.js; do node --check \"$f\" || exit 1; done",
+    "test": "node --test",
+    "gate": "npm run lint && npm test"
+  }
+}

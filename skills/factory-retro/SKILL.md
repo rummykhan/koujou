@@ -11,7 +11,7 @@ A factory that runs the same way after a bad epic as before it has learned nothi
 |---|---|---|---|
 | **Project** | `FACTORY.md` (commands, known gaps, a `## Lessons` section) and the project's pitfalls doc | This project only | "The gate does not start the real process; the validator must." |
 | **Factory process** | The factory's skills (`factory-*`) and references | Every project | "Reviewers need a three-dot diff once the epic branch has moved." |
-| **Workers** | The factory's agent files (`factory-builder`, `-reviewer`, `-tester`, `-validator`) | Every project | "Stop processes by PID, never by pattern." |
+| **Workers** | The factory's agent files (`factory-builder`, `-reviewer`, `-security`, `-tester`, `-validator`) | Every project | "Stop processes by PID, never by pattern." |
 
 The factory's own source is wherever `~/.claude/skills/factory` points (`readlink` it); edit the files there, not copies.
 
@@ -25,7 +25,9 @@ Work from what happened, not from impressions.
 - **Orchestrator friction:** every place you worked around a skill, hit an error following it, improvised a step it did not cover, or had to re-brief an agent because the first brief was not enough.
 - **Design drift:** does the System design in `AGENTS.md` still describe the code? Check a few named paths and interfaces. Did any worker act on a stale line in it?
 - **User friction:** questions the user had to be asked late that could have been asked at the start; anything the user corrected.
-- **Cost:** agents spawned per task, rounds used, anything that ran long.
+- **Time and cost:** `koujou times <epic-id>` (or `--label factory:pass-<n>`): build, review and queue time per task, bounces, rebases, agents spawned. Look for the task that took several times longer than its siblings, time spent waiting in the merge queue (lanes overlapped), and review time that rivals build time.
+- **Merge conflicts:** which files conflicted, between which tasks, and whether their lanes or a missing dependency should have kept them apart.
+- **Security findings:** each introduced finding, and whether the task's reviewer or its acceptance criteria could have caught it earlier.
 
 ## 2. Find the causes
 
