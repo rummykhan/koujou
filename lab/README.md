@@ -39,4 +39,27 @@ A dependency-free Node link-shortener API. Seeded with a walking skeleton (`/hea
 - `factory-spec`, `factory-design` and `factory-new` as skills run by a fresh session (the lab's requirements and plan were written by the factory's author).
 - Any deploy beyond a local process.
 
-A second run should use a task set with a deliberately shared contract and a vaguer requirement, to force the first three.
+
+## Run 2 — linklab web UI (2026-11-19)
+
+One lane-M epic: a web page, a list endpoint and link titles from an external API whose key was deliberately unavailable. Five tasks plus a QA task and a prerequisite.
+
+**Result:** epic closed after 1 validation round. 4 builder runs, 1 tester run, 5 reviews, 1 validation in a real browser. 112 unit tests and a 37-test Playwright suite.
+
+| Stage | Exercised | Outcome |
+|---|---|---|
+| Prerequisites | Key asked for up front, marked pending, gated bead, thin real-API task behind it | Everything else shipped; the key and its task are listed under "Waiting on you" |
+| QA tester | Acceptance suite written from requirements in parallel with builders | 37 tests, red by design until wiring, then green with no edits; reviewer caught 11 of 11 injected defects with it |
+| Parallel build | 4 worktrees at once (3 builders + tester) | Clean merges |
+| Mailbox | Builder → tester on page handles; builder → orchestrator on a contract ripple; orchestrator ruling relayed | First real use; worked |
+| Blocker bubbling | Wiring builder reported the key under `needs_user` and built on the fake | Worked |
+| Validator | Chromium via Playwright browser tools, screenshots saved as evidence | All criteria pass; 3 minor bugs deferred |
+| Living design | `koujou init` + as-built System design in AGENTS.md | `koujou doctor` clean |
+| Retro | Earlier changelog entries checked; four new changes | See CHANGELOG.md |
+
+### Still not exercised with real agents
+
+- A review failure and the `fix_attempts` cap (12 of 12 reviews have passed first time).
+- A merge conflict.
+- `factory-spec`, `factory-design`, `factory-new` and `factory-setup` run by a fresh session, and a full `factory-adopt` followed by delivery on a real existing project.
+- A deploy beyond a local process.

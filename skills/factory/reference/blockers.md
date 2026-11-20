@@ -32,12 +32,14 @@ In `factory-plan`, every prerequisite that is not `provided` becomes a bead so t
 
 ```bash
 P=$(bd create "P1: Stripe test secret key in .env.local as STRIPE_SECRET_KEY" -t task -p 1 \
-      -l factory:needs-user --parent <epic> \
+      -l factory:needs-user \
       -d "<what, where to put it, how the factory will verify it>" \
       --acceptance "- The key is present and a test API call succeeds" --silent)
 bd gate create --blocks $P --reason "Waiting on the user: Stripe test key"
 bd dep add <task-that-needs-it> $P
 ```
+
+The prerequisite bead is not a child of the epic. It often outlives the epic (the key arrives next week), and a child that cannot close keeps the epic open. Mention it in the epic's notes instead.
 
 Then shape the plan so as little as possible sits behind it:
 
@@ -56,7 +58,7 @@ Some needs only appear once someone is in the code. The path is always the same:
    - On the critical path (nothing else can proceed, or most of the epic is behind it) → now.
    - Otherwise → batched, at the next natural stop (a wave boundary, before deploy, in the report). One message listing every open need beats five interruptions.
 5. **When the user answers**, verify the thing works, `bd gate resolve <gate>`, close the prerequisite bead, and the blocked tasks reappear in `bd ready`.
-6. **If the epic finishes first**, the gated tasks are moved out as `factory:deferred`, and the report lists them under "Waiting on you" with exactly what is needed to pick them up in the next pass.
+6. **If the epic finishes first**, the gated tasks are moved out of it (`bd update <task> --parent "" --add-label factory:deferred`; the gate stays), and the report lists them under "Waiting on you" with exactly what is needed to pick them up in the next pass.
 
 What is waiting on the user, at any time: `bd list --label factory:needs-user --status open` and `bd gate list`.
 

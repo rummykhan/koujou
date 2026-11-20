@@ -51,7 +51,7 @@ git worktree add <worktree-root>/<task> -b factory-task/<task> factory/<epic>
 
 `<worktree-root>` comes from the profile; default `../.factory-worktrees/<repo-name>`, outside the repo so the project's own tooling does not scan it.
 
-The epic's QA task (label `qa`) is part of the first wave: it goes to a `factory-tester`, not a builder, with the requirements file and the profile's QA section in its brief. Its branch is reviewed and merged like any other; from then on the acceptance suite is part of the gate you run on the epic branch, and a suite test that still fails once all tasks are merged is a bug to triage (step 4) before validation even starts.
+The epic's QA task (label `qa`) is part of the first wave: it goes to a `factory-tester`, not a builder, with the requirements file and the profile's QA section in its brief. Its branch is reviewed and merged like any other. The suite describes the finished epic, so it stays red on the epic branch until the tasks it covers, usually ending with the wiring task, are merged: run the unit gate after each merge, and the full gate including the suite once they are all in. A suite test that still fails then is a bug to triage (step 4) before validation even starts.
 
 **c. Spawn the builders, all in one message** so they run in parallel. Each brief contains: the task id; the absolute worktree path and branch, with an instruction to work only there whatever directory its environment reports; the path to `FACTORY.md`; the path to the swarm protocol; one line per sibling in this wave (id, title, lane) so the builder knows who is nearby; a distinct port or database suffix if the project runs local services; and on a retry, the reviewer's findings verbatim. Do not paste the task text; the builder reads it from beads.
 
@@ -78,7 +78,7 @@ A conflict means the branch goes back to its builder to rebase onto the current 
 
 ```bash
 bd close <task> --reason "<what shipped> | evidence: reviewer verified N/N criteria, gate green at <sha> | residue: <follow-up ids or none>"
-git worktree remove <worktree-root>/<task> && git branch -d factory-task/<task>
+git worktree remove --force <worktree-root>/<task> && git branch -d factory-task/<task>   # --force: untracked build output is expected; the branch is already merged
 ```
 
 Closing unblocks dependents, which form the next wave.
@@ -113,7 +113,7 @@ After a deploy, run the profile's smoke command and check the result yourself.
 
 ## 3. Validate
 
-First run the gate on the epic branch, acceptance suite included, against the build you are about to validate. Then spawn one `factory-validator` with: the epic id, the environment and how to reach it, sign-in or seed instructions from the profile, the path to the requirements file, the path to `FACTORY.md`, the tester's `manual_checks` list, the evidence directory (`<work order>/evidence/`), and the profile's known gaps in the gate so it concentrates there.
+First run the gate on the epic branch, acceptance suite included, against the build you are about to validate. Then spawn one `factory-validator` with: the epic id, the environment and how to reach it, sign-in or seed instructions from the profile, the path to the requirements file, the path to `FACTORY.md`, the tester's `manual_checks` list, the evidence directory (`<work order>/evidence/`), the profile's known gaps in the gate so it concentrates there, the gate result you just ran (so it counts as checked elsewhere), and any open prerequisite whose absence makes a criterion uncheckable for now.
 
 From the second round on, tell the validator which bugs were fixed since the last round: it re-runs their reproduction steps, re-checks the epic's success criteria and the requirement-level acceptance lines for regressions, and need not repeat task-level criteria that passed before and whose code has not changed.
 

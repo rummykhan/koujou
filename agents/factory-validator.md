@@ -16,7 +16,7 @@ The epic id, the environment to validate (URL or how to start it, and on which p
 
 ## How to work
 
-1. **Collect the criteria.** `bd show <epic-id>` and `bd children <epic-id>` for the epic's success criteria and each task's acceptance criteria; the requirements file for the intent behind them; `## Lessons` and "Known gaps in the gate" in `FACTORY.md` for where this project's automated checks are blind.
+1. **Collect the criteria.** Your criteria are the ones a user of the product could observe: the epic's success criteria (`bd show <epic-id>`) and every acceptance line in the requirements file. Read the tasks' acceptance criteria (`bd children <epic-id>`) for the behaviour they describe, but criteria about how the work was done (a unit test exists, a module has a certain signature, the gate passes) belong to the reviewer and the gate; list them once as "checked elsewhere" and do not let them decide your verdict. Also read `## Lessons` and "Known gaps in the gate" in `FACTORY.md` for where this project's automated checks are blind.
 2. **Confirm what you are testing.** Bring the product up as the profile says, or confirm the given environment is the build under test (the commit or version it reports, when the process started).
 3. **Use it the way a user does.**
    - **UI:** drive a real browser with the Playwright browser tools (load them with ToolSearch if they are deferred: `mcp__playwright__browser_navigate`, `browser_snapshot`, `browser_click`, `browser_fill_form`, `browser_take_screenshot`, `browser_console_messages`, `browser_network_requests`). If those are unavailable, drive Playwright from a script, or use the project's headless-browser skill. Walk each flow start to finish, read what is on the page, and check the browser console and failed network requests after each flow: a page that looks right while logging errors is a finding.
@@ -54,4 +54,4 @@ needs_user: <things only the user can provide that blocked a check — or none>
 evidence: <directory, and the files worth opening>
 ```
 
-The verdict is `pass` only when every criterion passes. `not verified` items make it `fail` unless the brief said that item is checked elsewhere.
+The verdict is `pass` when every user-observable criterion passes. A `not verified` item makes it `fail`, unless the brief says it is checked elsewhere (the gate result the orchestrator ran, a prerequisite that is still open) or it is a how-it-was-built criterion that is the reviewer's. Bugs that break no criterion are reported and do not change the verdict; triage decides what happens to them.

@@ -23,3 +23,27 @@ New in this pass (requested by the user, not yet exercised when written):
 - **agents/factory-tester**, **skills/factory-plan (QA task)**: a QA test engineer writes the acceptance suite from the requirements, in parallel with the builders.
 - **reference/blockers.md** and the prerequisite sweep in spec/design/plan/run: ask for everything only the user can provide once, up front; gate or defer what is unavailable; bubble up what surfaces mid-run.
 - **skills/factory-retro**: this stage.
+
+## 2026-11-19 — linklab / ll-rzg (lab run 2: web UI, QA, a missing API key)
+
+Earlier entries checked against this run:
+- Reviewer runs the real entry point for wiring changes — **confirmed** (the ll-bkl and ll-rej reviewers both started the real process).
+- Wiring task carries a real-process criterion — **confirmed** (ll-rej added a spawned-process test; validation passed in round 1, down from 2).
+- Stop processes by PID — **confirmed** (every worker reported PID-based cleanup).
+- Rolling waves, three-dot diff, worktree pinning, branch naming — **confirmed**, no incidents.
+- `fix_attempts` cap and the stuck path — **no evidence yet**: 12 of 12 reviews across both runs passed first time.
+
+Changed:
+- **reference/blockers.md**: a prerequisite bead is not a child of the epic — because ll-rzg.1 (the API key) had to be detached before the epic could close. Expected effect: an epic with an open prerequisite closes without manual surgery.
+- **agents/factory-validator**, **skills/factory-run**: the validator's verdict rests on user-observable criteria; how-it-was-built criteria and the orchestrator's gate run count as checked elsewhere — because the ll-rzg validator returned `fail` although every criterion it could exercise passed. Expected effect: no technical fails; a `fail` always names a broken criterion.
+- **skills/factory-run**: the acceptance suite is expected red on the epic branch until the wiring task merges; worktrees are removed with `--force` — because the suite failed 37/37 by design between ll-41o and ll-rej, and e2e build output blocked a plain worktree removal.
+- **skills/factory-plan**: a task that changes an asserted shape owns the tests pinning the old shape — because ll-bkl and ll-rej each had to edit test files outside their lanes (declared, and judged correct by review). Expected effect: fewer `shared_files` entries.
+
+Worked as designed, kept:
+- The mailbox: the page builder told the QA tester how it implemented each handle before the tester's selectors were final; an ambiguous requirement (console errors) was raised by a builder, ruled on by the orchestrator, and relayed.
+- Prerequisite flow: the key was asked for at the requirements gate, marked pending, gated in beads, built around with a fake, reported by the wiring builder under `needs_user`, and listed in the report under "Waiting on you".
+- QA independence: the suite was written without reading the implementation and went 37/37 green when the wiring landed, with no edits to `e2e/`.
+
+Cost note (one run, not acted on): the QA tester and the reviewer of its suite each built a throwaway reference implementation, about 12 minutes each. Worth it here; revisit if it recurs on larger epics.
+
+Also in this pass: `koujou init` / `doctor` CLI, one-line installer, `/factory-setup`, and the living system design in `AGENTS.md`.

@@ -42,6 +42,7 @@ Kinds of task to remember: a `spike` for each unknown the design flagged; migrat
 ## Dependencies
 
 - Add an edge only where one task truly cannot start until another is finished: it calls code the other creates, or builds on its schema.
+- When a task changes a shape other code already asserts on (a field added to a response, a route that changes status), its lane includes the existing tests that pin the old shape, and its criteria say those tests are updated to the new contract and nothing else in them is loosened. Otherwise the builder has to step outside its lane to get the gate green.
 - Add an edge between any two tasks whose lanes overlap, even if neither logically needs the other. This is what makes "ready at the same time" mean "safe to build in parallel".
 - To widen the swarm, look for a contract that would let two dependent tasks proceed at once (agree the interface up front, build both sides against it). Put that contract in the design field of both.
 - Don't chain tasks just because you would naturally do them in that order. Every unnecessary edge removes a parallel slot.
