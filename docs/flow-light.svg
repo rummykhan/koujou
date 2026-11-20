@@ -1,0 +1,86 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 560" width="1200" height="560" role="img" aria-label="Koujou pipeline: raw idea, requirements, design and plan with your approval at each step; then a delivery loop of build, review, merge, deploy, validate and triage that repeats until shipped, followed by a retro.">
+<defs>
+<marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#6e7781"/></marker>
+<marker id="ahb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#0969da"/></marker>
+<marker id="ahr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#cf222e"/></marker>
+</defs>
+<style>
+text{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans",Helvetica,Arial,sans-serif}
+.t{font-size:16px;font-weight:600;fill:#1f2328}
+.s{font-size:12.5px;fill:#59636e}
+.m{font-size:12.5px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;fill:#0969da}
+.h{font-size:11.5px;font-weight:700;letter-spacing:.09em;fill:#59636e}
+.p{font-size:12px;font-weight:600}
+</style>
+<rect x="20" y="14" width="1160" height="172" rx="14" fill="#f6f8fa" stroke="#d8dee4"/>
+<text class="h" x="44" y="42">PLAN · YOU APPROVE EACH STEP</text>
+<rect x="70" y="56" width="220" height="66" rx="10" fill="#ffffff" stroke="#d0d7de" stroke-width="1.2"/>
+<text class="t" x="180.0" y="85.0" text-anchor="middle">Raw idea</text>
+<text class="s" x="180.0" y="106.0" text-anchor="middle">whatever you type</text>
+<rect x="350" y="56" width="220" height="66" rx="10" fill="#ffffff" stroke="#d0d7de" stroke-width="1.2"/>
+<text class="t" x="460.0" y="85.0" text-anchor="middle">Requirements</text>
+<text class="m" x="460.0" y="106.0" text-anchor="middle">/factory-spec</text>
+<rect x="630" y="56" width="220" height="66" rx="10" fill="#ffffff" stroke="#d0d7de" stroke-width="1.2"/>
+<text class="t" x="740.0" y="85.0" text-anchor="middle">Design</text>
+<text class="m" x="740.0" y="106.0" text-anchor="middle">/factory-design</text>
+<rect x="910" y="56" width="220" height="66" rx="10" fill="#ffffff" stroke="#d0d7de" stroke-width="1.2"/>
+<text class="t" x="1020.0" y="85.0" text-anchor="middle">Epics + task graph</text>
+<text class="m" x="1020.0" y="106.0" text-anchor="middle">/factory-plan</text>
+<path d="M294 89.0H345" fill="none" stroke="#6e7781" stroke-width="1.6"  marker-end="url(#ah)"/>
+<path d="M574 89.0H625" fill="none" stroke="#6e7781" stroke-width="1.6"  marker-end="url(#ah)"/>
+<path d="M854 89.0H905" fill="none" stroke="#6e7781" stroke-width="1.6"  marker-end="url(#ah)"/>
+<path d="M460.0 122V134" stroke="#9a6700" stroke-width="1.4"/>
+<rect x="401.0" y="134" width="118" height="26" rx="13.0" fill="#fff8c5" stroke="#9a6700" stroke-width="1.1"/>
+<text class="p" x="460.0" y="151.2" text-anchor="middle" fill="#9a6700">✓ you approve</text>
+<path d="M740.0 122V134" stroke="#9a6700" stroke-width="1.4"/>
+<rect x="681.0" y="134" width="118" height="26" rx="13.0" fill="#fff8c5" stroke="#9a6700" stroke-width="1.1"/>
+<text class="p" x="740.0" y="151.2" text-anchor="middle" fill="#9a6700">✓ you approve</text>
+<path d="M1020.0 122V134" stroke="#9a6700" stroke-width="1.4"/>
+<rect x="961.0" y="134" width="118" height="26" rx="13.0" fill="#fff8c5" stroke="#9a6700" stroke-width="1.1"/>
+<text class="p" x="1020.0" y="151.2" text-anchor="middle" fill="#9a6700">✓ you approve</text>
+<path d="M1020.0 160V200H108.0V269" fill="none" stroke="#0969da" stroke-width="1.6"  marker-end="url(#ahb)"/>
+<rect x="20" y="214" width="1160" height="326" rx="14" fill="#f6f8fa" stroke="#d8dee4"/>
+<path d="M108.0 214V269" fill="none" stroke="#0969da" stroke-width="1.6"  marker-end="url(#ahb)"/>
+<text class="h" x="126.0" y="244">DELIVERY LOOP</text>
+<text class="m" x="248.0" y="244">/factory-run</text>
+<rect x="42" y="274" width="132" height="70" rx="10" fill="#ffffff" stroke="#d0d7de" stroke-width="1.2"/>
+<text class="t" x="108.0" y="305.0" text-anchor="middle">Build</text>
+<text class="s" x="108.0" y="326.0" text-anchor="middle">parallel worktrees</text>
+<rect x="206" y="274" width="132" height="70" rx="10" fill="#ffffff" stroke="#d0d7de" stroke-width="1.2"/>
+<text class="t" x="272.0" y="305.0" text-anchor="middle">Review</text>
+<text class="s" x="272.0" y="326.0" text-anchor="middle">independent agent</text>
+<rect x="370" y="274" width="132" height="70" rx="10" fill="#ffffff" stroke="#d0d7de" stroke-width="1.2"/>
+<text class="t" x="436.0" y="305.0" text-anchor="middle">Merge</text>
+<text class="s" x="436.0" y="326.0" text-anchor="middle">one at a time</text>
+<rect x="534" y="274" width="132" height="70" rx="10" fill="#ffffff" stroke="#d0d7de" stroke-width="1.2"/>
+<text class="t" x="600.0" y="305.0" text-anchor="middle">Deploy</text>
+<text class="s" x="600.0" y="326.0" text-anchor="middle">per your policy</text>
+<rect x="698" y="274" width="132" height="70" rx="10" fill="#ffffff" stroke="#8250df" stroke-width="1.6"/>
+<text class="t" x="764.0" y="305.0" text-anchor="middle">Validate</text>
+<text class="s" x="764.0" y="326.0" text-anchor="middle">QA · real browser</text>
+<rect x="862" y="274" width="132" height="70" rx="10" fill="#ffffff" stroke="#d0d7de" stroke-width="1.2"/>
+<text class="t" x="928.0" y="305.0" text-anchor="middle">Triage</text>
+<text class="s" x="928.0" y="326.0" text-anchor="middle">sort the bugs</text>
+<rect x="1026" y="274" width="132" height="70" rx="10" fill="#ffffff" stroke="#1a7f37" stroke-width="1.6"/>
+<text class="t" x="1092.0" y="305.0" text-anchor="middle">Shipped</text>
+<text class="s" x="1092.0" y="326.0" text-anchor="middle">report + evidence</text>
+<path d="M178 300.0H201" fill="none" stroke="#6e7781" stroke-width="1.6"  marker-end="url(#ah)"/>
+<path d="M202 318.0H179" fill="none" stroke="#cf222e" stroke-width="1.6"  marker-end="url(#ahr)"/>
+<path d="M342 309.0H365" fill="none" stroke="#6e7781" stroke-width="1.6"  marker-end="url(#ah)"/>
+<path d="M506 309.0H529" fill="none" stroke="#6e7781" stroke-width="1.6"  marker-end="url(#ah)"/>
+<path d="M670 309.0H693" fill="none" stroke="#6e7781" stroke-width="1.6"  marker-end="url(#ah)"/>
+<path d="M834 309.0H857" fill="none" stroke="#6e7781" stroke-width="1.6"  marker-end="url(#ah)"/>
+<path d="M998 309.0H1021" fill="none" stroke="#6e7781" stroke-width="1.6"  marker-end="url(#ah)"/>
+<path d="M906.0 344V410H108.0V349" fill="none" stroke="#cf222e" stroke-width="1.6"  marker-end="url(#ahr)"/>
+<rect x="382.0" y="397" width="250" height="26" rx="13.0" fill="#ffffff" stroke="#cf222e" stroke-width="1.1"/>
+<text class="p" x="507.0" y="414.2" text-anchor="middle" fill="#cf222e">fix now · loop capped at 3 rounds</text>
+<path d="M950.0 344V448" fill="none" stroke="#6e7781" stroke-width="1.6" stroke-dasharray="5 4" marker-end="url(#ah)"/>
+<rect x="862.0" y="452" width="176" height="26" rx="13.0" fill="#ffffff" stroke="#59636e" stroke-width="1.1"/>
+<text class="p" x="950.0" y="469.2" text-anchor="middle" fill="#59636e">defer → next phase</text>
+<path d="M1092.0 344V492" fill="none" stroke="#1a7f37" stroke-width="1.6"/>
+<rect x="958.0" y="492" width="200" height="26" rx="13.0" fill="#dafbe1" stroke="#1a7f37" stroke-width="1.1"/>
+<text class="p" x="1058.0" y="509.2" text-anchor="middle" fill="#1a7f37">retro · factory improves itself</text>
+<text class="s" x="44" y="470">Agents work in parallel git worktrees; beads tracks every task,</text>
+<text class="s" x="44" y="488">dependency and gate. Anything only you can provide is asked for</text>
+<text class="s" x="44" y="506">once, up front, and never blocks the rest.</text>
+</svg>

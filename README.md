@@ -1,85 +1,177 @@
 # Koujou 工場
 
-*Koujou* (工場, kōjō) is Japanese for "factory". This is a software factory for Claude Code: a reusable delivery pipeline. It takes a raw idea to shipped, validated software on any project, using [beads](https://github.com/gastownhall/beads) (`bd`) for the dependency graph and a swarm of subagents working in parallel git worktrees under one orchestrator.
+**A software factory for Claude Code. Hand it an idea; a swarm of agents takes it to shipped, tested, validated software.**
 
-```
-raw idea → requirements → design → epics + task graph → build ⇄ review → merge → deploy → validate → triage ─┐
-           /factory-spec  /factory-design  /factory-plan  └──────────── /factory-run ────────────────────────┤
-                ▲ you approve   ▲ you approve   ▲ you approve                    fix now (capped) ◄──────────┤
-                                                                                 defer to next phase ◄───────┘
-```
+**Platforms:** macOS, Linux
 
-## Quick start
+[![License](https://img.shields.io/github/license/rummykhan/koujou)](LICENSE)
+[![Stars](https://img.shields.io/github/stars/rummykhan/koujou?style=flat)](https://github.com/rummykhan/koujou/stargazers)
+[![Last commit](https://img.shields.io/github/last-commit/rummykhan/koujou)](https://github.com/rummykhan/koujou/commits/main)
+[![Built for Claude Code](https://img.shields.io/badge/built%20for-Claude%20Code-D97757)](https://claude.com/claude-code)
+[![Tasks by beads](https://img.shields.io/badge/tasks%20by-beads-4B32C3)](https://github.com/gastownhall/beads)
+[![QA with Playwright](https://img.shields.io/badge/QA%20with-Playwright-2EAD33)](https://playwright.dev)
+[![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen)](https://github.com/rummykhan/koujou/pulls)
+
+*Koujou* (工場, kōjō) is Japanese for "factory". It turns a raw request into requirements, a design and a dependency graph of tasks, then runs an orchestrated swarm of builder, reviewer and QA agents in parallel git worktrees until the work is validated. You approve at the gates; the factory does the rest, and improves itself after every run.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/flow-dark.svg">
+  <img alt="Koujou pipeline: plan with your approval at each step, then a delivery loop of build, review, merge, deploy, validate and triage, ending in a retro" src="docs/flow-light.svg">
+</picture>
+
+## ⚡ Quick Start
 
 ```bash
+# Install koujou (system-wide; also installs beads if you don't have it)
 curl -fsSL https://raw.githubusercontent.com/rummykhan/koujou/main/install.sh | bash
+
+# Wire up YOUR project
 cd your-project
 koujou init
 ```
 
-Then restart Claude Code and, in the project, run `/factory-setup` followed by `/factory <what you want built>`.
+Restart Claude Code, open it in your project, and run:
 
-### What each step does
+```text
+/factory-setup
+```
 
-| Step | Effect |
-|---|---|
-| `install.sh` | Installs [beads](https://github.com/gastownhall/beads) (`bd`) if missing (Homebrew, then npm, then the beads install script). Clones this repo to `~/.koujou`. Links its skills into `~/.claude/skills`, its agents into `~/.claude/agents/factory`, and the `factory` command into `~/.local/bin`. Safe to re-run. |
-| `koujou init` | In the current project, instantly and without committing: `git init` if needed; `bd init` if there is no `.beads/` (an existing database is kept); creates `FACTORY.md` from the template; appends the factory block to `AGENTS.md`; makes `CLAUDE.md` import `AGENTS.md`. Idempotent. |
-| `/factory-setup` | In Claude Code: reads the code, proves the gate, fills in `FACTORY.md` and the system design in `AGENTS.md`, and asks you once for anything only you can provide. |
-| `koujou doctor` | Checks the installation and the current project, and says what is still unfilled. |
-| `koujou update` | Pulls the latest factory and relinks. `koujou uninstall` removes the links. |
+Then give it work:
 
-### For AI agents installing this
+```text
+/factory add CSV export to the posts page
+```
 
-If you were handed this repository and asked to install it, do exactly this:
+**Note:** Koujou is installed once and used everywhere. You don't clone this repository into your project.
 
-1. Run the installer: `curl -fsSL https://raw.githubusercontent.com/rummykhan/koujou/main/install.sh | bash`. If `~/.koujou` already exists, run `~/.koujou/bin/koujou update` instead.
-2. In the user's project directory, run `koujou init` (or `~/.koujou/bin/koujou init` if `~/.local/bin` is not on the PATH), then `koujou doctor`.
-3. Tell the user to restart Claude Code so the new skills and agent types load, then run `/factory-setup` in the project. If the skills are already available in your session, run `factory-setup` yourself now.
-4. Do not commit the files `koujou init` created unless the user asks; report which files changed.
+`koujou init` is instant and commits nothing. It creates `.beads/` (the task database), `FACTORY.md` (the project profile), a factory block in `AGENTS.md` (how work gets done, plus the living system design), and makes `CLAUDE.md` import `AGENTS.md`. `/factory-setup` then reads your code, proves your test gate, and fills those files in.
 
-Requirements: `git`, `bash`, Claude Code, and one of Homebrew, npm or curl for beads. macOS and Linux.
+## 🤖 Installing with an agent
 
-## Use
+Give your agent this repository and it can do the whole thing. The steps it should run:
 
-| You want | Run |
-|---|---|
-| Set up a project (existing or empty) | `/factory-setup` |
-| Deliver something | `/factory` — sizes it (S/M/L) and routes to the right stage |
-| A specific stage | `/factory-spec`, `/factory-design`, `/factory-plan`, `/factory-run <epic-id>`, `/factory-retro` |
+```bash
+curl -fsSL https://raw.githubusercontent.com/rummykhan/koujou/main/install.sh | bash
+```
 
-`/factory-setup` leaves three files in the project:
+```bash
+cd /path/to/your/project
+koujou init
+koujou doctor
+```
 
-| File | Holds |
-|---|---|
-| `FACTORY.md` | The project profile: commands, the gate, git and deploy policy, QA, prerequisites, limits, lessons |
-| `AGENTS.md` | A managed factory block: how work gets done here, and the living system design (as built, updated whenever an epic ships). `CLAUDE.md` imports it |
-| `.beads/` | The task graph |
+Then restart Claude Code so the new skills and agent types load, and run `/factory-setup` in the project. Agents: don't commit the files `koujou init` creates unless asked; report which files changed.
 
-## What is in here
+Already installed? Update instead:
+
+```bash
+koujou update
+```
+
+## 🛠 Features
+
+* **Idea to shipped:** requirements, system design, epics and tasks, build, review, QA, deploy, validation, bug triage.
+* **Swarm in worktrees:** independent tasks are built at the same time, each agent in its own git worktree; the orchestrator merges one branch at a time.
+* **Nobody grades their own work:** a separate reviewer checks every task against acceptance criteria written before the code.
+* **QA department:** a test engineer writes the acceptance suite from the requirements (Playwright for UIs); a validator uses the running product in a real browser and saves evidence.
+* **You are asked once:** API keys, access and decisions are requested up front, in one batch. What you can't provide is built against a fake and listed under "Waiting on you".
+* **Loops are capped:** a task that keeps failing review, or an epic that keeps failing validation, stops and comes to you instead of burning tokens.
+* **Living system design:** `AGENTS.md` holds an as-built description of your system, rewritten whenever an epic ships.
+* **Self-improving:** every epic ends with a retro that edits the factory's own skills and worker instructions, logged in [`CHANGELOG.md`](CHANGELOG.md).
+* **Fits your project:** `FACTORY.md` holds your commands, git and deploy policy; the skills stay generic.
+
+## 📖 Commands
+
+In your terminal:
+
+| Command | Action |
+| --- | --- |
+| `koujou init` | Wire the current project: beads, `FACTORY.md`, `AGENTS.md`, `CLAUDE.md`. |
+| `koujou doctor` | Check the installation and the current project. |
+| `koujou update` | Pull the latest koujou and relink. |
+| `koujou uninstall` | Remove the links. Beads and your projects are untouched. |
+
+In Claude Code:
+
+| Command | Action |
+| --- | --- |
+| `/factory-setup` | Onboard a project, existing or empty. Run once. |
+| `/factory <request>` | Size the work and run the pipeline. |
+| `/factory-spec` | Raw request → testable requirements. |
+| `/factory-design` | Requirements → system design. |
+| `/factory-plan` | Design → epics and a task graph in beads. |
+| `/factory-run <epic-id>` | The delivery loop: build, review, merge, deploy, validate, triage. |
+| `/factory-retro` | Learn from the run and improve the factory. |
+
+## 🔄 How a run goes
+
+**1. You describe what you want.** The factory writes requirements with acceptance criteria and lists everything it needs from you.
+
+```text
+/factory let users export their posts as CSV
+```
+
+**2. You approve the requirements, the design (for bigger work) and the plan.** The plan is a graph of tasks in beads:
+
+```bash
+bd swarm validate <epic-id>
+```
+
+```text
+Wave 1: 3 issues   ← built in parallel
+Wave 2: 1 issues
+Max parallelism: 3
+```
+
+**3. The swarm builds.** Each ready task gets a worktree and a builder; a QA tester writes acceptance tests alongside. Reviewers pass or bounce each branch; passing branches are merged one at a time.
+
+**4. QA validates.** The acceptance suite runs, then a validator uses the real product. Bugs are triaged: fix now (back into the loop) or defer to the next phase.
+
+**5. You get a report.** What shipped, the evidence, what was deferred, and what is waiting on you.
+
+See what's happening at any time:
+
+```bash
+bd epic status
+```
+
+```bash
+bd list --label factory:needs-user --status open
+```
+
+## 🏭 The workers
+
+| Worker | Job |
+| --- | --- |
+| **Orchestrator** | Your Claude Code session. Briefs agents, merges, records state in beads, talks to you. |
+| `factory-builder` | Implements one task in its own worktree. |
+| `factory-reviewer` | Independently checks a task against its acceptance criteria. Read-only. |
+| `factory-tester` | QA. Writes the automated acceptance suite from the requirements. |
+| `factory-validator` | QA. Exercises the running product like a user. |
+
+Workers coordinate through a per-task mailbox (beads comments) and never touch each other's files. The rules are in [`skills/factory/reference/swarm.md`](skills/factory/reference/swarm.md).
+
+## 📁 What's in this repo
 
 | Path | What |
-|---|---|
-| `skills/factory` | Overview, sizing lanes, artifacts, roles. `reference/` holds the beads conventions, swarm protocol, blocker protocol, profile and AGENTS.md templates, and an example plan |
-| `skills/factory-setup`, `factory-adopt`, `factory-new` | Project setup: the entry point and its two paths |
-| `skills/factory-spec`, `factory-design`, `factory-plan` | The three upstream stages, each ending at a user approval |
-| `skills/factory-run` | The delivery loop the orchestrator follows |
-| `skills/factory-retro` | The self-improvement pass; its changes are logged in `CHANGELOG.md` |
-| `agents/` | Workers: `factory-builder`, `factory-reviewer`, and the QA department, `factory-tester` and `factory-validator` |
-| `lab/` | Lab notes; `lab/workspace/` (git-ignored) holds throwaway projects the factory is tested on |
+| --- | --- |
+| [`skills/`](skills) | The pipeline stages, as Claude Code skills. |
+| [`skills/factory/reference/`](skills/factory/reference) | Conventions: beads, swarm protocol, blockers, templates. |
+| [`agents/`](agents) | The worker definitions. |
+| [`bin/koujou`](bin/koujou) | The CLI. |
+| [`CHANGELOG.md`](CHANGELOG.md) | What the factory changed about itself, and why. |
+| [`lab/`](lab) | Notes from the test runs the factory was developed against. |
 
-## How it holds together
+## ✅ Requirements
 
-- **`FACTORY.md` adapts the factory to the project**: commands, the gate, git and deploy policy, where docs live, limits. Skills stay generic.
-- **Beads is the only task state.** Epics, tasks, bugs, dependencies, loop counters (`fix_attempts`, `validate_rounds`), human gates.
-- **Acceptance criteria are written before code**, and the builder never judges its own work: a reviewer checks each task, a QA tester writes the acceptance suite from the requirements (Playwright for UIs), and a black-box validator uses the assembled product in a real browser.
-- **You are asked once, early.** Keys, accounts, access and decisions are swept for at the requirements gate and requested in one batch. What you cannot provide is built against a fake or moved to the next pass; what surfaces mid-run waits behind a `factory:needs-user` gate while other work continues.
-- **Parallel by construction.** Tasks that are ready together own different files; each gets a worktree and a builder; the orchestrator merges one at a time.
-- **Agents coordinate through bead comments** (a mailbox per task) and the orchestrator, per `skills/factory/reference/swarm.md`.
-- **Loops are capped.** A task that fails review `max_fix_attempts` times is marked stuck and gated for you; an epic that fails validation `max_validate_rounds` times stops.
-- **The factory improves itself.** Each epic ends with a retro that turns the run's evidence into changes to the project profile, the skills and the workers' instructions.
-- **You approve** requirements, design, plan, and any deploy beyond local.
+* [Claude Code](https://claude.com/claude-code)
+* `git` and `bash`
+* [beads](https://github.com/gastownhall/beads) (`bd`), installed for you by the installer
 
-## License
+## 🧪 Status
 
-MIT. See [LICENSE](LICENSE).
+Koujou is new. It has delivered two epics end to end in a lab project (an API, then a web UI with a Playwright suite). Not yet exercised: a deploy beyond a local process, and a full delivery on a large existing codebase. See [`lab/README.md`](lab/README.md) for exactly what has and has not been tested.
+
+## 📝 License
+
+[MIT](LICENSE)
