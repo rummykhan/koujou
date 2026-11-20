@@ -19,12 +19,6 @@ factory init
 
 Then restart Claude Code and, in the project, run `/factory-setup` followed by `/factory <what you want built>`.
 
-While this repository is private the raw URL needs authentication, so use the GitHub CLI instead of `curl`:
-
-```bash
-gh repo clone rummykhan/software-factory ~/.software-factory && ~/.software-factory/install.sh
-```
-
 ### What each step does
 
 | Step | Effect |
@@ -39,7 +33,7 @@ gh repo clone rummykhan/software-factory ~/.software-factory && ~/.software-fact
 
 If you were handed this repository and asked to install it, do exactly this:
 
-1. Run the installer: `gh repo clone rummykhan/software-factory ~/.software-factory && ~/.software-factory/install.sh` (or the `curl` one-liner above if the repository is public). If `~/.software-factory` already exists, run `~/.software-factory/bin/factory update` instead.
+1. Run the installer: `curl -fsSL https://raw.githubusercontent.com/rummykhan/software-factory/main/install.sh | bash`. If `~/.software-factory` already exists, run `~/.software-factory/bin/factory update` instead.
 2. In the user's project directory, run `factory init` (or `~/.software-factory/bin/factory init` if `~/.local/bin` is not on the PATH), then `factory doctor`.
 3. Tell the user to restart Claude Code so the new skills and agent types load, then run `/factory-setup` in the project. If the skills are already available in your session, run `factory-setup` yourself now.
 4. Do not commit the files `factory init` created unless the user asks; report which files changed.
@@ -85,3 +79,7 @@ Requirements: `git`, `bash`, Claude Code, and one of Homebrew, npm or curl for b
 - **Loops are capped.** A task that fails review `max_fix_attempts` times is marked stuck and gated for you; an epic that fails validation `max_validate_rounds` times stops.
 - **The factory improves itself.** Each epic ends with a retro that turns the run's evidence into changes to the project profile, the skills and the workers' instructions.
 - **You approve** requirements, design, plan, and any deploy beyond local.
+
+## License
+
+MIT. See [LICENSE](LICENSE).
