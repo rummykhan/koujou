@@ -1,6 +1,6 @@
 ---
 name: factory-setup
-description: Set up the software factory in a project, in one go — beads, AGENTS.md with the living system design, CLAUDE.md, and the FACTORY.md profile. Use when the user says "set up the factory here", "onboard this project", "factory init", or when any factory skill finds no FACTORY.md. Works for both existing codebases and empty directories.
+description: Set up the software factory in a project, in one go — beads, AGENTS.md with the living system design, CLAUDE.md, and the FACTORY.md profile. Use when the user says "set up the factory here", "onboard this project", "koujou init", or when any factory skill finds no FACTORY.md. Works for both existing codebases and empty directories.
 ---
 
 # Factory: set up a project
@@ -14,7 +14,7 @@ One command should take a project from "never seen the factory" to "ready to del
 
 ## 1. Wire the project
 
-Run `factory init` in the project root (if the command is not on the PATH: `~/.software-factory/bin/factory init`, or `bin/factory init` from the factory checkout). It is instant and idempotent: it initialises git and beads if they are missing (an existing `.beads/` is kept), copies the `FACTORY.md` template, appends the factory block to `AGENTS.md`, and makes `CLAUDE.md` import `AGENTS.md`. It never commits. Everything after this step is filling those files with what is true of this project. `factory doctor` reports what is still template.
+Run `koujou init` in the project root (if the command is not on the PATH: `~/.koujou/bin/koujou init`, or `bin/koujou init` from the factory checkout). It is instant and idempotent: it initialises git and beads if they are missing (an existing `.beads/` is kept), copies the `FACTORY.md` template, appends the factory block to `AGENTS.md`, and makes `CLAUDE.md` import `AGENTS.md`. It never commits. Everything after this step is filling those files with what is true of this project. `koujou doctor` reports what is still template.
 
 ## 2. Work out which path this is
 
@@ -24,7 +24,7 @@ Run `factory init` in the project root (if the command is not on the PATH: `~/.s
 ## 3. Beads
 
 - `.beads/` exists → keep it. `bd doctor` should be clean; `bd setup claude --check` should report the session hook installed (run `bd setup claude` if not).
-- `factory init` created it → look at what `bd init` wrote (`git status`): it also creates or updates `AGENTS.md` and `CLAUDE.md` and installs the session-start hook that runs `bd prime`.
+- `koujou init` created it → look at what `bd init` wrote (`git status`): it also creates or updates `AGENTS.md` and `CLAUDE.md` and installs the session-start hook that runs `bd prime`.
 - If the repo has a git remote and the user wants beads shared across machines, that is `bd dolt push`; leave it off until they ask.
 
 ## 4. FACTORY.md
@@ -35,13 +35,13 @@ Filled in by the path from step 2, from `~/.claude/skills/factory/reference/prof
 
 Follow `~/.claude/skills/factory/reference/agents-template.md`:
 
-- The factory block is already in `AGENTS.md` from `factory init`; update it in place. Fill "How work gets done here" from the profile, and write the **System design** from the code as it is today. For a new project the design sections say "nothing built yet" and are filled when the first epic closes.
+- The factory block is already in `AGENTS.md` from `koujou init`; update it in place. Fill "How work gets done here" from the profile, and write the **System design** from the code as it is today. For a new project the design sections say "nothing built yet" and are filled when the first epic closes.
 - Make sure `CLAUDE.md` contains the line `@AGENTS.md`. Keep whatever else it holds.
 - If `bd init` wrote a "do not commit unless asked" rule into these files, the profile's git policy must say that factory workers commit on their own task branches, so workers are not caught between the two.
 
 ## 6. Check it end to end
 
-- `factory doctor` reports no problems.
+- `koujou doctor` reports no problems.
 - `bd ready` runs.
 - The gate command from the profile runs (existing projects: green, twice).
 - `AGENTS.md` has exactly one factory block; `CLAUDE.md` imports it; the System design names real paths (`ls` a few).

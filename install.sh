@@ -1,18 +1,18 @@
 #!/usr/bin/env bash
-# Software Factory installer.
+# Koujou (software factory) installer.
 #
-#   curl -fsSL https://raw.githubusercontent.com/rummykhan/software-factory/main/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/rummykhan/koujou/main/install.sh | bash
 #   or, from a clone:  ./install.sh
 #
 # What it does:
 #   1. installs beads (bd) if it is missing
-#   2. puts the factory in ~/.software-factory (clone, or update if already there) unless run from a clone
+#   2. puts the factory in ~/.koujou (clone, or update if already there) unless run from a clone
 #   3. links its skills and agents into ~/.claude, and the `factory` command into ~/.local/bin
-# Safe to re-run. Remove with:  factory uninstall
+# Safe to re-run. Remove with:  koujou uninstall
 set -euo pipefail
 
-REPO="${FACTORY_REPO:-https://github.com/rummykhan/software-factory.git}"
-HOME_DIR="${FACTORY_HOME:-$HOME/.software-factory}"
+REPO="${KOUJOU_REPO:-https://github.com/rummykhan/koujou.git}"
+HOME_DIR="${KOUJOU_HOME:-$HOME/.koujou}"
 
 say() { printf '%s\n' "$*"; }
 
@@ -32,13 +32,13 @@ fi
 SELF="${BASH_SOURCE[0]:-}"
 if [[ -n "$SELF" && -d "$(cd "$(dirname "$SELF")" 2>/dev/null && pwd)/skills/factory" ]]; then
   SRC="$(cd "$(dirname "$SELF")" && pwd)"            # running from a clone
-  say "factory  using this checkout: $SRC"
+  say "koujou   using this checkout: $SRC"
 else
   command -v git >/dev/null 2>&1 || { say "git is required"; exit 1; }
   if [[ -d "$HOME_DIR/.git" ]]; then
-    say "factory  updating $HOME_DIR"; git -C "$HOME_DIR" pull --ff-only --quiet
+    say "koujou   updating $HOME_DIR"; git -C "$HOME_DIR" pull --ff-only --quiet
   else
-    say "factory  cloning into $HOME_DIR"
+    say "koujou   cloning into $HOME_DIR"
     slug="${REPO#https://github.com/}"; slug="${slug%.git}"
     GIT_TERMINAL_PROMPT=0 git clone --quiet "$REPO" "$HOME_DIR" 2>/dev/null \
       || { command -v gh >/dev/null 2>&1 && gh repo clone "$slug" "$HOME_DIR" -- --quiet; } \
@@ -48,4 +48,4 @@ else
 fi
 
 # 3. link
-exec "$SRC/bin/factory" link
+exec "$SRC/bin/koujou" link

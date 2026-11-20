@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# factory — the software factory's command line.
-#   factory init        set up the current project: beads, AGENTS.md, CLAUDE.md, FACTORY.md
-#   factory doctor      check the installation and the current project
-#   factory update      pull the latest factory and relink
-#   factory link        (re)link skills, agents and this command into ~/.claude and ~/.local/bin
-#   factory uninstall   remove the links (beads and your projects are left alone)
+# koujou — the software factory's command line.
+#   koujou init        set up the current project: beads, AGENTS.md, CLAUDE.md, FACTORY.md
+#   koujou doctor      check the installation and the current project
+#   koujou update      pull the latest factory and relink
+#   koujou link        (re)link skills, agents and this command into ~/.claude and ~/.local/bin
+#   koujou uninstall   remove the links (beads and your projects are left alone)
 set -euo pipefail
 
 self="${BASH_SOURCE[0]}"; while [[ -L "$self" ]]; do self="$(readlink "$self")"; done
@@ -28,13 +28,14 @@ cmd_link() {
   mkdir -p "$SKILLS" "$(dirname "$AGENTS")" "$BIN"
   for d in "$SRC"/skills/*/; do link_one "${d%/}" "$SKILLS/$(basename "$d")"; done
   link_one "$SRC/agents" "$AGENTS"
-  link_one "$SRC/bin/factory" "$BIN/factory"
-  case ":$PATH:" in *":$BIN:"*) ;; *) say "  note  $BIN is not on your PATH; add it, or call $SRC/bin/factory directly";; esac
+  link_one "$SRC/bin/koujou" "$BIN/koujou"
+  if [[ -L "$BIN/factory" ]]; then rm "$BIN/factory"; fi   # name used before the rename
+  case ":$PATH:" in *":$BIN:"*) ;; *) say "  note  $BIN is not on your PATH; add it, or call $SRC/bin/koujou directly";; esac
   cat <<'MSG'
 
-Software factory installed.
+Koujou (software factory) installed.
   1. Restart Claude Code (new agent types register when a session starts).
-  2. In a project:    factory init         beads + AGENTS.md + CLAUDE.md + FACTORY.md, instantly
+  2. In a project:    koujou init         beads + AGENTS.md + CLAUDE.md + FACTORY.md, instantly
   3. In Claude Code:  /factory-setup       fills them in from the code and proves the gate
   4. Then:            /factory <what you want built>
 MSG
@@ -42,7 +43,7 @@ MSG
 
 cmd_uninstall() {
   for d in "$SRC"/skills/*/; do l="$SKILLS/$(basename "$d")"; if [[ -L "$l" ]]; then rm "$l"; say "  removed $l"; fi; done
-  for l in "$AGENTS" "$BIN/factory"; do if [[ -L "$l" ]]; then rm "$l"; say "  removed $l"; fi; done
+  for l in "$AGENTS" "$BIN/koujou"; do if [[ -L "$l" ]]; then rm "$l"; say "  removed $l"; fi; done
   say "Links removed. The checkout at $SRC and beads are untouched."
 }
 
@@ -57,7 +58,7 @@ agents_block() { # the managed block, extracted from the template so there is on
 }
 
 cmd_init() {
-  command -v bd >/dev/null 2>&1 || { say "bd (beads) is not installed. Run the factory installer first."; exit 1; }
+  command -v bd >/dev/null 2>&1 || { say "bd (beads) is not installed. Run the koujou installer first."; exit 1; }
   local name prefix
   name="$(basename "$PWD")"
 
@@ -100,18 +101,18 @@ cmd_doctor() {
   PROBLEMS=0
   say "Installation"
   if command -v bd >/dev/null 2>&1; then ok "beads: $(bd version 2>/dev/null | head -1)"; else bad "bd not found — run the installer"; fi
-  [[ -L "$SKILLS/factory" ]] && ok "skills linked" || bad "skills not linked — run: factory link"
-  [[ -L "$AGENTS" ]] && ok "agents linked" || bad "agents not linked — run: factory link"
+  [[ -L "$SKILLS/factory" ]] && ok "skills linked" || bad "skills not linked — run: koujou link"
+  [[ -L "$AGENTS" ]] && ok "agents linked" || bad "agents not linked — run: koujou link"
   say "Project ($PWD)"
-  [[ -d .beads ]] && ok ".beads/" || bad "no .beads/ — run: factory init"
+  [[ -d .beads ]] && ok ".beads/" || bad "no .beads/ — run: koujou init"
   if [[ -f FACTORY.md ]]; then
     if grep -q '<One paragraph' FACTORY.md; then bad "FACTORY.md is still the template — run /factory-setup in Claude Code"; else ok "FACTORY.md"; fi
-  else bad "no FACTORY.md — run: factory init"; fi
+  else bad "no FACTORY.md — run: koujou init"; fi
   if [[ -f AGENTS.md ]] && grep -qF "$BEGIN" AGENTS.md; then
     [[ "$(grep -cF "$BEGIN" AGENTS.md)" == 1 ]] && ok "AGENTS.md factory block" || bad "AGENTS.md has more than one factory block"
     if grep -q '<Two or three sentences' AGENTS.md; then bad "System design in AGENTS.md is still the template — run /factory-setup"; fi
-  else bad "AGENTS.md has no factory block — run: factory init"; fi
-  if [[ -f CLAUDE.md ]] && grep -qxF '@AGENTS.md' CLAUDE.md; then ok "CLAUDE.md imports AGENTS.md"; else bad "CLAUDE.md does not import AGENTS.md — run: factory init"; fi
+  else bad "AGENTS.md has no factory block — run: koujou init"; fi
+  if [[ -f CLAUDE.md ]] && grep -qxF '@AGENTS.md' CLAUDE.md; then ok "CLAUDE.md imports AGENTS.md"; else bad "CLAUDE.md does not import AGENTS.md — run: koujou init"; fi
   [[ $PROBLEMS == 0 ]] && say "All good." || { say "$PROBLEMS thing(s) to fix."; exit 1; }
 }
 

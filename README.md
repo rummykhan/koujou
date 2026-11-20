@@ -1,6 +1,6 @@
-# Software Factory
+# Koujou 工場
 
-A reusable delivery pipeline for Claude Code. It takes a raw idea to shipped, validated software on any project, using [beads](https://github.com/steveyegge/beads) (`bd`) for the dependency graph and a swarm of subagents working in parallel git worktrees under one orchestrator.
+*Koujou* (工場, kōjō) is Japanese for "factory". This is a software factory for Claude Code: a reusable delivery pipeline. It takes a raw idea to shipped, validated software on any project, using [beads](https://github.com/gastownhall/beads) (`bd`) for the dependency graph and a swarm of subagents working in parallel git worktrees under one orchestrator.
 
 ```
 raw idea → requirements → design → epics + task graph → build ⇄ review → merge → deploy → validate → triage ─┐
@@ -12,9 +12,9 @@ raw idea → requirements → design → epics + task graph → build ⇄ review
 ## Quick start
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/rummykhan/software-factory/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/rummykhan/koujou/main/install.sh | bash
 cd your-project
-factory init
+koujou init
 ```
 
 Then restart Claude Code and, in the project, run `/factory-setup` followed by `/factory <what you want built>`.
@@ -23,20 +23,20 @@ Then restart Claude Code and, in the project, run `/factory-setup` followed by `
 
 | Step | Effect |
 |---|---|
-| `install.sh` | Installs [beads](https://github.com/gastownhall/beads) (`bd`) if missing (Homebrew, then npm, then the beads install script). Clones this repo to `~/.software-factory`. Links its skills into `~/.claude/skills`, its agents into `~/.claude/agents/factory`, and the `factory` command into `~/.local/bin`. Safe to re-run. |
-| `factory init` | In the current project, instantly and without committing: `git init` if needed; `bd init` if there is no `.beads/` (an existing database is kept); creates `FACTORY.md` from the template; appends the factory block to `AGENTS.md`; makes `CLAUDE.md` import `AGENTS.md`. Idempotent. |
+| `install.sh` | Installs [beads](https://github.com/gastownhall/beads) (`bd`) if missing (Homebrew, then npm, then the beads install script). Clones this repo to `~/.koujou`. Links its skills into `~/.claude/skills`, its agents into `~/.claude/agents/factory`, and the `factory` command into `~/.local/bin`. Safe to re-run. |
+| `koujou init` | In the current project, instantly and without committing: `git init` if needed; `bd init` if there is no `.beads/` (an existing database is kept); creates `FACTORY.md` from the template; appends the factory block to `AGENTS.md`; makes `CLAUDE.md` import `AGENTS.md`. Idempotent. |
 | `/factory-setup` | In Claude Code: reads the code, proves the gate, fills in `FACTORY.md` and the system design in `AGENTS.md`, and asks you once for anything only you can provide. |
-| `factory doctor` | Checks the installation and the current project, and says what is still unfilled. |
-| `factory update` | Pulls the latest factory and relinks. `factory uninstall` removes the links. |
+| `koujou doctor` | Checks the installation and the current project, and says what is still unfilled. |
+| `koujou update` | Pulls the latest factory and relinks. `koujou uninstall` removes the links. |
 
 ### For AI agents installing this
 
 If you were handed this repository and asked to install it, do exactly this:
 
-1. Run the installer: `curl -fsSL https://raw.githubusercontent.com/rummykhan/software-factory/main/install.sh | bash`. If `~/.software-factory` already exists, run `~/.software-factory/bin/factory update` instead.
-2. In the user's project directory, run `factory init` (or `~/.software-factory/bin/factory init` if `~/.local/bin` is not on the PATH), then `factory doctor`.
+1. Run the installer: `curl -fsSL https://raw.githubusercontent.com/rummykhan/koujou/main/install.sh | bash`. If `~/.koujou` already exists, run `~/.koujou/bin/koujou update` instead.
+2. In the user's project directory, run `koujou init` (or `~/.koujou/bin/koujou init` if `~/.local/bin` is not on the PATH), then `koujou doctor`.
 3. Tell the user to restart Claude Code so the new skills and agent types load, then run `/factory-setup` in the project. If the skills are already available in your session, run `factory-setup` yourself now.
-4. Do not commit the files `factory init` created unless the user asks; report which files changed.
+4. Do not commit the files `koujou init` created unless the user asks; report which files changed.
 
 Requirements: `git`, `bash`, Claude Code, and one of Homebrew, npm or curl for beads. macOS and Linux.
 
