@@ -13,8 +13,12 @@ jobs:
           node-version: 22
       - name: Static checks
         run: tests/run.sh static
-      - name: Install beads
-        run: npm install -g @beads/bd && bd version
+      - name: Install with the real installer (beads, links, CLI)
+        run: |
+          bash install.sh
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+      - name: The installed CLI works
+        run: koujou | head -3 && bd version
       - name: CLI tests and scenario setups
         run: |
           git config --global user.name "ci" && git config --global user.email "ci@koujou.invalid"
