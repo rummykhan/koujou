@@ -39,8 +39,9 @@ else
     say "factory  updating $HOME_DIR"; git -C "$HOME_DIR" pull --ff-only --quiet
   else
     say "factory  cloning into $HOME_DIR"
-    git clone --quiet "$REPO" "$HOME_DIR" 2>/dev/null \
-      || { command -v gh >/dev/null 2>&1 && gh repo clone "${REPO#https://github.com/}" "$HOME_DIR" -- --quiet; } \
+    slug="${REPO#https://github.com/}"; slug="${slug%.git}"
+    GIT_TERMINAL_PROMPT=0 git clone --quiet "$REPO" "$HOME_DIR" 2>/dev/null \
+      || { command -v gh >/dev/null 2>&1 && gh repo clone "$slug" "$HOME_DIR" -- --quiet; } \
       || { say "could not clone $REPO (private repo? run: gh auth login)"; exit 1; }
   fi
   SRC="$HOME_DIR"
