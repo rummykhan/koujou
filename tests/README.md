@@ -77,6 +77,7 @@ Compare a demo run's `koujou times` with the last one recorded here; a change th
 | Date | Result | Tasks | Agent runs | First claim to validated | Bounces | Rebases |
 |---|---|---|---|---|---|---|
 | 2026-11-20 | 20 of 20 checks | 4 | 17 | 7 m 54 s | 0 | 1 |
+| 2026-11-21 | 20 of 20 checks | 4 | 12 | 10 m 42 s | 0 | 0 |
 
 ## Limits worth knowing
 

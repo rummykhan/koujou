@@ -114,7 +114,7 @@ def main(args):
         except (TypeError, ValueError):
             pass
         if "validate_rounds" in m:
-            print(f"  validation rounds that found bugs: {m['validate_rounds']}"
+            print(f"  validation rounds: {m['validate_rounds']}"
                   + (f" (open fix-now bugs after each: {str(m['round_open']).replace(',', ', ')})" if m.get("round_open") else ""))
     if runs_total:
         print(f"  agents spawned: {runs_total}")

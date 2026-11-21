@@ -158,3 +158,12 @@ A profile written before this still has `max_validate_rounds`; it is ignored, an
 - **agents/factory-security**: a proof reads only a file the agent planted — because in a scenario run on 2026-11-21 the agent proved a path traversal by fetching `/etc/passwd` and a file from the home folder, whose contents would have landed in a report. `security-finds-traversal` now fails on a proof that names real system or personal files. Expected effect: no real file read to make a point.
 
 Evidence for the new builder scenario: with the previous builder file the agent worked around the store defect inside its own lane and reported `done`; with the new one it reported `blocked` and `blocked_by`.
+
+## 2026-11-21 — demo-todo run on the changes above (td-9t7 in the fixture)
+
+- **skills/factory-run §1b**: where the acceptance suite runs inside the gate, the QA branch lands last — because in the demo `node --test` picks up every test file, and landing the reviewed suite first would have left the epic gate red until the last feature. Expected effect: no red epic gate caused by the suite arriving early.
+- **agents/factory-reviewer**: stop a server by process id, never by pattern — because a demo reviewer ran `pkill -f "node src/main.js"`; builders had this rule through the swarm protocol, reviewers did not. Expected effect: no pattern kill in a reviewer's report.
+- **bin/koujou-times**: "validation rounds", not "rounds that found bugs" — the demo's single passing round was counted as one that found bugs.
+
+Not exercised by the demo: the fix loop itself. Validation passed first time, so `koujou converge` recorded a zero round and nothing more. It is covered by the CLI tests and the two builder scenarios only; a demo variant with a planted bug that hides a second one would close that.
+
