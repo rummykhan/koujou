@@ -24,7 +24,7 @@ Priority: P0 broken now, P1 this epic cannot ship without it, P2 normal, P3 nice
 
 Labels: `factory:stuck` (hit the attempt cap, waiting on the user), `factory:needs-user` (a prerequisite only the user can provide; see `blockers.md`), `factory:deferred` (logged for a later phase), `qa` (the epic's acceptance-suite task), `security` (a task a security reviewer must read, or a bug the security review found), `factory:pass-<n>` (an issue picked for a backlog pass), `factory:run` (a pass's run record: the task that holds the run's timestamps and counters, since a pass has no epic), `factory:awaiting-merge` (built, reviewed and validated on the epic branch; closed by `factory-ship` when it reaches the base branch), `area:<name>` when useful.
 
-Time: beads stamps `created_at`, `started_at` (on claim) and `closed_at` itself. The run adds `built_at`, `reviewed_at`, `merged_at` and `agent_runs` on tasks, and `security_at`, `validated_at` and `shipped_at` on the epic, as metadata (`bd update <id> --set-metadata built_at=$(date -u +%FT%TZ)`). `bd list --json` leaves metadata out, so read it with `bd show <id> --json`, or let `koujou times <epic-id>` add it up.
+Time: beads stamps `created_at`, `started_at` (on claim) and `closed_at` itself. The run adds `claimed_at`, `built_at`, `reviewed_at`, `merged_at` and `agent_runs` on tasks, and `security_at`, `validated_at` and `shipped_at` on the epic, as metadata (`bd update <id> --set-metadata built_at=$(date -u +%FT%TZ)`). `bd list --json` leaves metadata out, so read it with `bd show <id> --json`, or let `koujou times <epic-id>` add it up.
 
 ## Creating the graph
 

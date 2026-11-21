@@ -8,6 +8,7 @@ Anything outside the repo that the work needs and an agent cannot produce:
 
 - **Credentials and access** — API keys, OAuth client ids, cloud profiles, repo or registry permissions, test accounts, webhook secrets
 - **External setup** — a third-party app registration, a domain or DNS record, a billing plan, a sandbox tenant, an allow-listed IP
+- **Production changes the deploy does not make** — a new table, index, queue, environment variable or secret, or a data migration, where the project's normal deploy ships code only. Code that fails open or falls back when the thing is missing will look shipped while doing nothing
 - **Decisions** — a product or pricing choice, anything that spends money or is hard to reverse, a legal or brand call, and any behaviour the issue leaves open where the options differ in security or in what users are promised (which hosts a redirect may go to; whether one part of the system may write another's data)
 - **Assets and data** — logos, copy, sample files, a data export, a schema from another team
 - **People** — a manual step only the user can do (approve an app, click a confirmation email, sign in once with a real account)

@@ -58,6 +58,8 @@ plus() { python3 -c "from datetime import datetime, timedelta; import sys; print
 bd update $t1 --set-metadata built_at=$(plus 90) --set-metadata reviewed_at=$(plus 150) --set-metadata merged_at=$(plus 160) --set-metadata agent_runs=3 --set-metadata fix_attempts=1 >/dev/null
 out=$(koujou times $epic)
 check "times shows build, review and queue durations" bash -c 'echo "$0" | grep -Eq "1m30s +1m00s +10s +2m40s +1 +0 +3"' "$out"
+bd update $t1 --set-metadata claimed_at=$(plus 60) >/dev/null
+check "times prefers the run's own claim stamp over an older claim" bash -c '"$0" times "$1" | grep -Eq "30s +1m00s +10s +1m40s"' "$TESTS_DIR/../bin/koujou" $epic
 check "times totals the agents" bash -c 'echo "$0" | grep -q "agents spawned: 3"' "$out"
 check "times on an unknown id is an error" bash -c '! "$0" times td-nope' "$TESTS_DIR/../bin/koujou"
 

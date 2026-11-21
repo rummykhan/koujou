@@ -58,7 +58,9 @@ def main(args):
             epic = d
             continue
         m = d.get("metadata") or {}
-        start = ts(d.get("started_at"))
+        # beads keeps the first claim's time for good; a backlog issue someone claimed weeks ago would make this
+        # run look weeks long, so the run's own stamp wins when it is there
+        start = ts(m.get("claimed_at")) or ts(d.get("started_at"))
         built, reviewed, merged = ts(m.get("built_at")), ts(m.get("reviewed_at")), ts(m.get("merged_at"))
         end = merged or ts(d.get("closed_at"))
         if start:
