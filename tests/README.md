@@ -70,6 +70,14 @@ Changes to the CLI get a line in `tests/cli/test_koujou.sh` instead. A new cross
 
 Not covered yet, and good first contributions: `factory-tester` and `factory-validator` (a fixture with a page and a planted UI bug), `factory-spec` and `factory-plan` on their own (a raw request in, a lint-clean plan with acceptance commands out), the stuck path at the attempt cap, and `factory-ship` against a remote.
 
+## Demo baseline
+
+Compare a demo run's `koujou times` with the last one recorded here; a change that doubles a number deserves a sentence in the pull request.
+
+| Date | Result | Tasks | Agent runs | First claim to validated | Bounces | Rebases |
+|---|---|---|---|---|---|---|
+| 2026-11-20 | 20 of 20 checks | 4 | 17 | 7 m 54 s | 0 | 1 |
+
 ## Limits worth knowing
 
 - Tier 2 and 3 need Claude Code and spend tokens, so CI does not run them. The person changing a worker runs its scenarios and says so in the pull request.

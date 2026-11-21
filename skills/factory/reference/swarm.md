@@ -4,9 +4,9 @@ The delivery loop runs several builders at once, each in its own git worktree. W
 
 ## 1. Lanes are decided before the wave starts
 
-- Every task's `design` field lists the files or directories it owns. The planner adds a dependency between any two tasks whose lanes overlap, so tasks that are ready together never share a file.
+- Every task's `design` field lists the files or directories it owns. The planner adds a dependency between any two tasks that would change the same function, block or contract. Tasks that are ready together may still share a file where each adds its own separate piece; the design field names the task it shares with, and section 5 is how that is kept safe.
 - Shared contracts (a type, a route shape, a table schema, a function signature that two tasks meet at) are fixed in `design.md` or the epic's design field **before** the wave. A builder implements its side of a contract exactly as written.
-- Before spawning a wave the orchestrator re-checks the lanes of the tasks in it. Overlap means the plan is wrong: run the overlapping tasks one after the other.
+- Before spawning a wave the orchestrator re-checks the lanes of the tasks in it. Two tasks set to change the same function or contract without a dependency means the plan is wrong: run them one after the other.
 
 ## 2. Stay in your lane
 

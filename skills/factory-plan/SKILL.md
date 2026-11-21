@@ -70,7 +70,7 @@ Scouting costs one short agent per issue and replaces questions asked after the 
 
 - Add an edge only where one task truly cannot start until another is finished: it calls code the other creates, or builds on its schema.
 - When a task changes a shape other code already asserts on (a field added to a response, a route that changes status), its lane includes the existing tests that pin the old shape, and its criteria say those tests are updated to the new contract and nothing else in them is loosened. Otherwise the builder has to step outside its lane to get the gate green.
-- Add an edge between any two tasks whose lanes overlap, even if neither logically needs the other. This is what makes "ready at the same time" mean "safe to build in parallel".
+- Add an edge between two tasks that would change the same function, the same block or the same contract, even if neither logically needs the other: those cannot both be right without one seeing the other. Two tasks that only share a file, each adding its own route, case or test block, may run in parallel: the merge queue lands one and the other rebases (on the lab's pass, builders resolved six such conflicts themselves, the slowest in 34 seconds). Say so in both tasks' design fields ("shares `<file>` with `<task>`: keep the change local, expect to rebase"), and keep at most three tasks sharing one file in a wave.
 - To widen the swarm, look for a contract that would let two dependent tasks proceed at once (agree the interface up front, build both sides against it). Put that contract in the design field of both.
 - Don't chain tasks just because you would naturally do them in that order. Every unnecessary edge removes a parallel slot.
 

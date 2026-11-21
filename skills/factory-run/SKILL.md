@@ -59,7 +59,7 @@ bd update <epic> --set-metadata validated_at=$(now)    # the last validation pas
 
 Repeat until `bd ready --parent <epic> --exclude-type epic --json` returns nothing.
 
-**a. Pick the wave.** Take the ready tasks, up to `max_parallel_builders`. Compare their lanes (the files each owns, in the `design` field), including against tasks still in flight. If two overlap, keep one and leave the other for later.
+**a. Pick the wave.** Take the ready tasks, up to `max_parallel_builders`. Compare their lanes (the files each owns, in the `design` field), including against tasks still in flight. If two would change the same function or contract, keep one and leave the other for later; tasks that merely share a file run together and meet in the merge queue.
 
 Waves roll: you do not wait for a whole wave to finish. Each time a task closes, check `bd ready` again and start whatever has become unblocked while there is a free builder slot.
 
