@@ -120,7 +120,16 @@ cmd_doctor() {
   say "Project ($PWD)"
   [[ -d .beads ]] && ok ".beads/" || bad "no .beads/ — run: koujou init"
   if [[ -f FACTORY.md ]]; then
-    if grep -q '<One paragraph' FACTORY.md; then bad "FACTORY.md is still the template — run /factory-setup in Claude Code"; else ok "FACTORY.md"; fi
+    if grep -q '<One paragraph' FACTORY.md; then bad "FACTORY.md is still the template — run /factory-setup in Claude Code"
+    else
+      # a profile written by an older factory lacks what newer stages read; say exactly what
+      local missing=""
+      grep -q '^## QA' FACTORY.md || missing="$missing, a QA section (how to run one task's tests)"
+      grep -q '^## Security review' FACTORY.md || missing="$missing, a Security review section"
+      grep -q '^- Merge:' FACTORY.md || missing="$missing, a 'Merge:' line in Git policy (who merges the pull request)"
+      grep -q 'max_rebases' FACTORY.md || missing="$missing, max_rebases in Limits"
+      if [[ -n "$missing" ]]; then bad "FACTORY.md predates this version of the factory. Missing:${missing#,}. Run /factory-setup to refresh it"; else ok "FACTORY.md"; fi
+    fi
   else bad "no FACTORY.md — run: koujou init"; fi
   if [[ -f AGENTS.md ]] && grep -qF "$BEGIN" AGENTS.md; then
     [[ "$(grep -cF "$BEGIN" AGENTS.md)" == 1 ]] && ok "AGENTS.md factory block" || bad "AGENTS.md has more than one factory block"

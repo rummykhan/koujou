@@ -20,6 +20,12 @@ koujou init >/dev/null 2>&1
 check "init keeps an existing FACTORY.md" test "$(cat FACTORY.md)" = "# Mine"
 check "init keeps existing CLAUDE.md rules" grep -q 'my rules' CLAUDE.md
 
+cd "$TESTS_DIR/fixtures/todo"
+check "doctor accepts a current profile" bash -c '"$0" doctor 2>&1 | grep -q "ok    FACTORY.md"' "$TESTS_DIR/../bin/koujou"
+mkdir "$WORK/old" && cd "$WORK/old" && git init -q -b main && koujou init >/dev/null 2>&1
+grep -v -e '^## Security review' -e 'max_rebases' "$TESTS_DIR/fixtures/todo/FACTORY.md" > FACTORY.md
+check "doctor flags a profile from an older factory, naming what is missing" bash -c '"$0" doctor 2>&1 | grep -q "predates.*Security review.*max_rebases"' "$TESTS_DIR/../bin/koujou"
+
 echo "  koujou accept"
 todo_repo "$WORK/a" >/dev/null || fail "fixture repo"
 good=$(new_task "passes" "d" "- x — test: unit" "Lane: test/")
