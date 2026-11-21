@@ -35,6 +35,11 @@ else
     export PATH="$HOME/.local/bin:$HOME/go/bin:$PATH"
   fi
   bd_works || { say "Could not install beads. Install it from https://github.com/gastownhall/beads and run this again."; exit 1; }
+  # the beads script may build bd into ~/go/bin, which is on nobody's PATH; put it beside koujou so both are found together
+  case "$(command -v bd)" in "$HOME/go/bin/"*)
+    mkdir -p "$HOME/.local/bin" && ln -sf "$HOME/go/bin/bd" "$HOME/.local/bin/bd"
+    say "beads    linked into ~/.local/bin (it was built in ~/go/bin, which is not on your PATH)";;
+  esac
   say "beads    $(bd version 2>/dev/null | head -1)"
 fi
 
