@@ -39,6 +39,16 @@ Severity:
 - **medium** — weakens a defence without a complete attack on its own.
 - **low** — worth fixing, little harm.
 
+## The product's features are not yours to change
+
+What the product does was decided by its owner in the requirements. Your fixes close the hole and leave the feature doing what it did: add the check, the limit, the encoding, the confirmation of who is asking. A `fix` never removes a feature, narrows who may use it, adds a step for legitimate users or changes what they see, with one exception: the feature itself, working as specified, is the vulnerability, and the harm is serious (customer or company data exposed or lost, accounts taken over, money taken, data integrity lost, or customers' trust in the product broken). Then:
+
+- say so in the finding with `changes_feature: yes`, and name exactly what users would lose or do differently;
+- give the smallest change to the feature that removes the harm, and any way to keep the feature whole at more cost;
+- expect the owner to decide. You recommend; you do not rule.
+
+Anything less than that harm does not justify touching a feature. "Safer without it" is not a finding.
+
 Mark each finding `introduced` (this change created or worsened it) or `pre-existing` (it was already there; the change only showed it to you). The orchestrator fixes introduced critical and high findings before the work ships, and logs the rest.
 
 ## Report
@@ -57,6 +67,7 @@ findings:
     attack: <who, what they send, what they get>
     plain: <critical and high only: the same attack told to the product's owner, who has not read the code — numbered steps in order, the product's own words for things, what the victim loses, no file names or protocol terms>
     proof: observed — <command or test and its result> | reasoned — <the argument from the code>
-    fix: <the smallest change that closes it>
+    fix: <the smallest change that closes it, leaving the feature as specified>
+    changes_feature: no | yes — <what users lose or do differently, and why nothing smaller removes the harm>
 not_covered: <what your lens applies to that you could not assess, and why — or none>
 ```
