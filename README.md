@@ -73,13 +73,14 @@ koujou update
 * **Idea to shipped:** requirements, system design, epics and tasks, build, review, QA, deploy, validation, bug triage.
 * **Swarm in worktrees:** independent tasks are built at the same time, each agent in its own git worktree.
 * **Merge queue:** finished branches land one at a time; the others rebase onto the result, and the agent that wrote a change resolves its own conflicts.
-* **Security team:** before validation, several agents read the whole change, each through one lens: access, untrusted input, data exposure. Confirmed holes are fixed before anything ships.
+* **Security team:** before validation, several agents read the whole change, each through one lens: access, untrusted input, data exposure. Confirmed holes are fixed before anything ships. Security closes holes without changing what your product does: a fix that would remove or restrict a feature is allowed only for serious harm (data, accounts, money, trust), and then you decide.
 * **Acceptance tests close tasks:** every task's criteria name their checks before any code exists, and its tests carry the task id, so `koujou accept <task>` proves it done, at review, at landing and again before shipping.
 * **Nobody grades their own work:** a separate reviewer checks every task against those criteria.
 * **QA department:** a test engineer writes the acceptance suite from the requirements (Playwright for UIs); a validator uses the running product in a real browser and saves evidence. Everything is validated on a local build, so you need no cloud account; a deployed test environment is optional.
-* **Ships by pull request:** the factory pushes the branch, opens the PR, waits for CI, merges when you approve, then checks the deploy and closes the issues.
-* **Knows where the time went:** every task's build, review and queue time is recorded in beads; `koujou times` adds it up.
-* **You are asked once:** API keys, access and decisions are requested up front, in one batch, including when the work comes from your existing backlog. What you can't provide is built against a fake and listed under "Waiting on you".
+* **Ships by pull request:** the factory pushes the branch, opens the PR, waits for CI, merges when you approve, then checks the deploy and closes the issues. Production changes a normal deploy doesn't make (a new table, a migration) follow a fixed routine: diff first, apply only the expected change, verify, and check after the deploy that the shipped code is really using it.
+* **Knows where the time went:** every task's build, review and queue time is recorded in beads; `koujou times` adds it up, with time spent waiting on you counted apart from work.
+* **You are asked once:** API keys, access and decisions are requested up front, in one batch, including when the work comes from your existing backlog. What you can't provide is built against a fake and listed under "Waiting on you". Permission counts too: "may the factory create this table, or will you?" is asked at the start, not when the branch is finished.
+* **Asks you can answer in a line:** anything that would block the merge reaches you while work continues, not in the final report. Wording and similar asks arrive as a draft to approve, and security findings are told in plain steps: who does what, and what you would lose.
 * **Loops are capped:** a task that keeps failing review, or an epic that keeps failing validation, stops and comes to you instead of burning tokens.
 * **Living system design:** `AGENTS.md` holds an as-built description of your system, rewritten whenever an epic ships.
 * **Self-improving:** every epic ends with a retro that edits the factory's own skills and worker instructions, logged in [`CHANGELOG.md`](CHANGELOG.md).
