@@ -41,6 +41,8 @@ A scenario that fails once is run once more from a fresh setup before you call i
 
 ## The demo
 
+Two scenarios. `demo-todo` is the whole pipeline on a clean run; `demo-fix-loop` starts from a built epic with a planted bug and exercises validation, triage, the bug stack and `koujou converge`, which a clean run never enters. Run both for a change to the delivery loop, and `demo-fix-loop` alone for a change that only touches triage or the fix loop. In `demo-fix-loop` you know where the defect is and must not use it: file bugs, lanes and briefs only from what the validator and builders report.
+
 `tests/scenarios/demo-todo`. You are the orchestrator, and you stand in for the user at the gates as its `scenario.md` describes. Run its setup, follow its brief with the factory's skills read from this checkout, then run its `expect.sh` (the report argument can be the delivery report). Keep `koujou times <epic>` from the run: comparing it with the last demo's numbers in `tests/README.md` shows whether a change made the factory slower or more wasteful, which no assertion catches.
 
 ## Reporting

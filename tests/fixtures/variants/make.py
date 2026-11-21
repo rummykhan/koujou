@@ -10,6 +10,9 @@ Variants are the same feature built well or built with one planted defect, so a 
   search-store-bug  GET /todos?q=<text> (correct); over store-list-bug a search answers 500 once a todo is done, and the
                     cause is in src/store.js
   search-lane-bug   the same symptom, but the cause is in the search filter itself (src/server.js)
+  search-index      store.search(text) backed by an index that holds the todo objects
+  setdone-replace   planted, over done-good: setDone stores a new object, leaving the search index stale
+  search-route      GET /todos?q=<text> served from store.search
 usage: make.py <variant> <task-id>
 """
 import re
@@ -196,6 +199,54 @@ test('{tid}: GET /todos?q= lists only the todos whose title contains the text', 
     for (const title of ['buy milk', 'walk dog']) await fetch(`${{app.url}}/todos`, {{ method: 'POST', body: JSON.stringify({{ title }}) }});
     const listed = await (await fetch(`${{app.url}}/todos?q=milk`)).json();
     assert.deepEqual(listed.todos.map((todo) => todo.title), ['buy milk']);
+  }} finally {{
+    await app.close();
+  }}
+}});
+""")
+
+elif variant == "search-index":
+    # the store keeps an index for searching by text; it holds the todo objects themselves
+    sub("src/store.js", "  let nextId = 1;\n", "  let nextId = 1;\n  const index = [];\n")
+    sub("src/store.js", "      todos.set(todo.id, todo);\n", "      todos.set(todo.id, todo);\n      index.push(todo);\n")
+    sub("src/store.js", STORE_GET, STORE_GET + """    search(text) {
+      return index.filter((todo) => todo.title.includes(text)).map((todo) => ({ ...todo }));
+    },
+""")
+    open("test/search-index.test.js", "w").write(f"""import test from 'node:test';
+import assert from 'node:assert/strict';
+import {{ createStore }} from '../src/store.js';
+
+test('{tid}: store.search returns the todos whose title contains the text', () => {{
+  const store = createStore();
+  store.add('buy milk');
+  store.add('walk dog');
+  assert.deepEqual(store.search('milk'), [{{ id: 1, title: 'buy milk', done: false }}]);
+  assert.deepEqual(store.search('zzz'), []);
+}});
+""")
+
+elif variant == "setdone-replace":
+    # planted, applied with done-good: marking done stores a new object, so anything still holding the old one
+    # (the search index) goes stale. Invisible in GET /todos; visible only when searching after marking done.
+    sub("src/store.js", "      todo.done = done;\n      return { ...todo };", "      const next = { ...todo, done };\n      todos.set(id, next);\n      return { ...next };")
+
+elif variant == "search-route":
+    sub("src/server.js", "    if (req.method === 'GET') return send(res, 200, { todos: store.list() });\n", """    if (req.method === 'GET') {
+      const q = new URL(req.url, 'http://localhost').searchParams.get('q');
+      return send(res, 200, { todos: q ? store.search(q) : store.list() });
+    }
+""")
+    open("test/search.test.js", "w").write(f"""import test from 'node:test';
+import assert from 'node:assert/strict';
+import {{ start }} from './helpers.js';
+
+test('{tid}: GET /todos?q= lists only the todos whose title contains the text', async () => {{
+  const app = await start();
+  try {{
+    for (const title of ['buy milk', 'walk dog']) await fetch(`${{app.url}}/todos`, {{ method: 'POST', body: JSON.stringify({{ title }}) }});
+    const listed = await (await fetch(`${{app.url}}/todos?q=milk`)).json();
+    assert.deepEqual(listed.todos, [{{ id: 1, title: 'buy milk', done: false }}]);
   }} finally {{
     await app.close();
   }}

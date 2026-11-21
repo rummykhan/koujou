@@ -21,7 +21,7 @@ tests/run.sh          # tiers 0 and 1: a minute or two, no model. CI runs this o
 | **0. Static** (`tests/static/check.py`) | The prose is consistent with itself: every skill, worker, file, label, limit and `koujou` command that one file names exists in another; frontmatter is valid; scripts parse; scenarios are well formed | python3 | under a second |
 | **1. CLI** (`tests/cli/test_koujou.sh`) and scenario setups | `koujou init`, `doctor`, `accept`, `times`, `wait` and `converge` against real beads in a temp directory; every scenario's fixture still builds | beads | a minute or two |
 | **2. Module scenarios** (`tests/scenarios/*`, `tier: module`) | One worker or one rule, in a prepared situation, judged by what is true afterwards | Claude Code | one agent, under a minute each |
-| **3. Demo** (`tests/scenarios/demo-todo`) | The whole pipeline, from a raw request to a merged branch | Claude Code | 15 to 25 agent runs |
+| **3. Demo** (`tests/scenarios/demo-todo`, `demo-fix-loop`) | The whole pipeline, from a raw request to a merged branch; and the fix loop on a built epic with a planted bug whose cause is one level deeper | Claude Code | 12 to 25 agent runs; 8 to 12 for the fix loop |
 
 Run the cheapest tier that can fail for your change first. Most mistakes in a skill edit are broken references, and tier 0 finds those for free.
 
@@ -66,9 +66,9 @@ Changes to the CLI get a line in `tests/cli/test_koujou.sh` instead. A new cross
 | `agents/factory-security.md` | `security-finds-traversal`, `security-passes-clean-build` |
 | `agents/factory-builder.md` | `builder-meets-acceptance`, `builder-bug-deeper-cause`, `builder-bug-in-lane` |
 | `skills/factory/reference/swarm.md` | `builder-rebases-conflict` |
-| `skills/factory-run/SKILL.md` and the stages around it | `demo-todo` |
+| `skills/factory-run/SKILL.md` and the stages around it | `demo-todo` (a clean run), `demo-fix-loop` (validation finds a bug; triage, the bug stack, `koujou converge`) |
 
-Not covered yet, and good first contributions: `factory-tester` and `factory-validator` (a fixture with a page and a planted UI bug), `factory-spec` and `factory-plan` on their own (a raw request in, a lint-clean plan with acceptance commands out), the stuck path at the attempt cap, and `factory-ship` against a remote.
+Not covered yet, and good first contributions: `factory-tester` and `factory-validator` (a fixture with a page and a planted UI bug), `factory-spec` and `factory-plan` on their own (a raw request in, a lint-clean plan with acceptance commands out), the stuck path (a fix that fails validation twice, a chain deeper than `max_fix_depth`), and `factory-ship` against a remote.
 
 ## Demo baseline
 
@@ -78,6 +78,12 @@ Compare a demo run's `koujou times` with the last one recorded here; a change th
 |---|---|---|---|---|---|---|
 | 2026-11-20 | 20 of 20 checks | 4 | 17 | 7 m 54 s | 0 | 1 |
 | 2026-11-21 | 20 of 20 checks | 4 | 12 | 10 m 42 s | 0 | 0 |
+
+`demo-fix-loop`:
+
+| Date | Result | Bugs filed | Agent runs | First validation to passing one | Rounds | Open after each round |
+|---|---|---|---|---|---|---|
+| 2026-11-21 | 16 of 16 checks | 2 (one under the other) | 8 | 7 m 36 s | 2 | 1, 0 |
 
 ## Limits worth knowing
 

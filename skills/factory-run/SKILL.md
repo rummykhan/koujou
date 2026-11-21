@@ -182,6 +182,8 @@ For each bug the validator reported, and each discovered item from builders and 
 | **Defer** | Real, but outside this epic's criteria; cosmetic; rare | `bug` or `task` bead with label `factory:deferred`, no parent, `discovered-from` link. Listed in the report for a later phase. |
 | **Reject** | Not reproducible, or the product is right and the expectation was wrong | Note why in the report. If the requirement itself was ambiguous, that is a question for the user. |
 
+A fix-now bug gets what a planned task has: the validator's steps to reproduce, acceptance lines that each name a check (the reproduction no longer reproduces, pinned by a test named with the bug's id), an acceptance command, and a lane. Its lane is the lane of the task whose criterion it breaks, the place the symptom shows; you do not go looking for the cause to widen it. If the cause is elsewhere, its builder will say so (`blocked_by`), and that is what the bug stack below is for.
+
 Commands are in the beads reference. A `not verified` criterion is not a bug: either find a way to verify it or name it in the report as unverified.
 
 ### The fix loop

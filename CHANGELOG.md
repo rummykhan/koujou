@@ -167,3 +167,14 @@ Evidence for the new builder scenario: with the previous builder file the agent 
 
 Not exercised by the demo: the fix loop itself. Validation passed first time, so `koujou converge` recorded a zero round and nothing more. It is covered by the CLI tests and the two builder scenarios only; a demo variant with a planted bug that hides a second one would close that.
 
+## 2026-11-21 — demo-fix-loop: the fix loop run with real agents (td-yu2 in the fixture)
+
+A second demo scenario, `tests/scenarios/demo-fix-loop`: an epic already built, with one planted defect whose cause is a level below where it shows. Run once: 16 of 16 checks, 8 agents, 7 m 36 s from the first validation to the passing one.
+
+What the run showed, in order: the validator failed the criterion; the bug was filed with the lane of the task whose criterion it broke; its builder reproduced it, found the cause in the store, did not work around it and reported `blocked_by`; the deeper bug was filed underneath (`bd dep add`), built, reviewed and landed; the first bug's own builder was resumed, rebased and finished with a regression test; round two passed; `koujou converge` recorded 1, 0.
+
+- **skills/factory-run §4**: a fix-now bug gets criteria, an acceptance command and a lane, and its lane is that of the task whose criterion it breaks — the skill did not say how a bug's lane is chosen, and choosing it by guessing at the cause would defeat the stack. Expected effect: the orchestrator never widens a bug's lane on a hunch.
+- Confirmed from the entry above: bugs stack through dependencies; `blocked_by` instead of a symptom patch; the loop ends on evidence.
+
+Known and left alone: `koujou times` counts the time a bug spends waiting on the bug underneath it as build time (td-yu2.4 shows 4 m, of which about 2 m was waiting).
+
