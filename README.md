@@ -95,6 +95,7 @@ In your terminal:
 | `koujou doctor` | Check the installation and the current project. |
 | `koujou accept <task-id>` | Run a task's acceptance tests (or `--parent <epic-id>` for all of an epic's). |
 | `koujou times <epic-id>` | Time per task (build, review, queue), bounces, rebases and agents used. |
+| `koujou wait <epic-id> start\|end` | Mark when a run stops to wait for you and when it resumes, so `koujou times` reports waiting apart from work. |
 | `koujou update` | Pull the latest koujou and relink. |
 | `koujou uninstall` | Remove the links. Beads and your projects are untouched. |
 

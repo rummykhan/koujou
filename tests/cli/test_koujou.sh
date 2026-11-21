@@ -61,6 +61,16 @@ check "times shows build, review and queue durations" bash -c 'echo "$0" | grep 
 bd update $t1 --set-metadata claimed_at=$(plus 60) >/dev/null
 check "times prefers the run's own claim stamp over an older claim" bash -c '"$0" times "$1" | grep -Eq "30s +1m00s +10s +1m40s"' "$TESTS_DIR/../bin/koujou" $epic
 check "times totals the agents" bash -c 'echo "$0" | grep -q "agents spawned: 3"' "$out"
+koujou wait $epic start >/dev/null
+check "wait start stamps waiting_since" bash -c 'bd show "$0" --json | grep -q waiting_since' $epic
+check "a second start keeps the first stamp" bash -c '"$0" wait "$1" start | grep -q "already waiting"' "$TESTS_DIR/../bin/koujou" $epic
+bd update $epic --set-metadata waiting_since=$(python3 -c "from datetime import datetime, timedelta, timezone; print((datetime.now(timezone.utc)-timedelta(seconds=7200)).strftime('%Y-%m-%dT%H:%M:%SZ'))") >/dev/null
+check "times counts a wait that is still open" bash -c '"$0" times "$1" | grep -Eq "waiting on the user: 2h0[0-9]m"' "$TESTS_DIR/../bin/koujou" $epic
+koujou wait $epic end >/dev/null
+check "wait end clears the stamp and keeps the total" bash -c 'bd show "$0" --json | python3 -c "import json,sys; m=json.load(sys.stdin)[0][\"metadata\"]; sys.exit(0 if \"waiting_since\" not in m and int(m[\"waited_s\"])>=7200 else 1)"' $epic
+check "times reports the finished wait" bash -c '"$0" times "$1" | grep -Eq "waiting on the user: 2h0[0-9]m"' "$TESTS_DIR/../bin/koujou" $epic
+check "wait end when not waiting says so" bash -c '"$0" wait "$1" end | grep -q "was not waiting"' "$TESTS_DIR/../bin/koujou" $epic
+check "wait on an unknown id is an error" bash -c '! "$0" wait td-nope start' "$TESTS_DIR/../bin/koujou"
 check "times on an unknown id is an error" bash -c '! "$0" times td-nope' "$TESTS_DIR/../bin/koujou"
 
 finish

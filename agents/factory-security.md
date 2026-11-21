@@ -55,6 +55,7 @@ findings:
     origin: introduced | pre-existing
     where: <file:line>
     attack: <who, what they send, what they get>
+    plain: <critical and high only: the same attack told to the product's owner, who has not read the code — numbered steps in order, the product's own words for things, what the victim loses, no file names or protocol terms>
     proof: observed — <command or test and its result> | reasoned — <the argument from the code>
     fix: <the smallest change that closes it>
 not_covered: <what your lens applies to that you could not assess, and why — or none>

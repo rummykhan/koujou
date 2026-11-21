@@ -44,6 +44,7 @@ Known gaps in the gate: <areas with no tests, flaky tests, things only checkable
 - Who triggers each: <e.g. "local: factory. prod: user only, by merging the PR">
 - Validation target for the delivery loop: local <how: production build on a free port, with local services>. This is the default for every project: it needs no cloud account and cannot hurt anyone.
 - Deployed validation (optional, run by `factory-ship` after the merge): <none | URL of a test environment, the test accounts to use, and whether the acceptance suite can point at it (e.g. `BASE_URL=... npx playwright test`)>. Against production: smoke and read-only checks only, unless stated otherwise here.
+- Production changes the deploy does not make (infrastructure, migrations, secrets): <how they are made (the command, from where) and who may: "user only", or "the factory, after showing the diff, one stack at a time". A one-off yes from the user does not change this line; only the user does.>
 - Rollback: <the procedure, or "none exists" — say so plainly, the orchestrator treats deploys with no rollback as needing the user every time>
 - Missing environments: <e.g. "no staging: the only target beyond local is production">
 

@@ -132,7 +132,7 @@ Leave its worktree in place for inspection. Carry on with every task that does n
 
 When a worker reports something only the user can provide, follow `blockers.md`: record it as a `factory:needs-user` bead with a gate that blocks exactly the work needing it, add it to the requirements' prerequisite table, and keep the factory running on everything else. If the worker built against a stand-in, its task can still be reviewed and merged; create a thin follow-up task for the real integration and put that behind the gate.
 
-Interrupt the user at once only when the need is on the critical path. Otherwise collect needs and raise them together at the next natural stop: when the waves run dry, before deploy, or in the report. When the user provides something, verify it with the cheapest real call, `bd gate resolve <gate>`, close the prerequisite bead, and the blocked work returns to `bd ready`. Whatever is still gated when the epic is otherwise finished moves out as `factory:deferred` and is listed in the report under "Waiting on you".
+Interrupt the user at once only when the need is on the critical path. A need that will block the merge is raised at the next wave boundary, while building continues, never saved for the report. Otherwise collect needs and raise them together at the next natural stop: when the waves run dry, before deploy, or in the report. Where the factory can produce the thing and the user only has to approve it, bring the draft, already on the branch, instead of the question (`blockers.md`, "Bring a draft, not a question"). When the user provides something, verify it with the cheapest real call, `bd gate resolve <gate>`, close the prerequisite bead, and the blocked work returns to `bd ready`. Whatever is still gated when the epic is otherwise finished moves out as `factory:deferred` and is listed in the report under "Waiting on you".
 
 ## 2. Security review
 
@@ -152,7 +152,7 @@ Then handle the findings. Agents working alone over-report and occasionally inve
 
 - Read each finding's proof. An `observed` proof you re-run. A `reasoned` one you check against the code; if you cannot tell, ask a second `factory-security` agent to confirm or refute that one finding, giving it the finding but not the first agent's confidence.
 - **Introduced, critical or high, confirmed** → fix now: a `bug` bead, child of the epic, P0 or P1, label `security`, with the attack as its steps to reproduce and "the attack no longer works, shown by a test" as a criterion. It goes through the build wave like any task, and the lens that found it re-checks the fix.
-- **Introduced, medium or low**, and **anything pre-existing** → a `factory:deferred` bead with label `security`, listed in the report. A pre-existing critical or high finding is also told to the user at once: it is in production now.
+- **Introduced, medium or low**, and **anything pre-existing** → a `factory:deferred` bead with label `security`, listed in the report. A pre-existing critical or high finding is also told to the user at once: it is in production now. Tell it with the finding's `plain` account (who does what, in order, and what the victim loses), whether it was observed or reasoned, the options and your recommendation; the `attack` line is written for reviewers and a user cannot decide from it.
 - **Refuted** → note it in the report with why.
 
 Write the result to `<work order>/security.md`: lenses run, what each covered and did not, findings with their fate. Stamp `security_at` on the epic. If fixes were needed, the security review counts as passed when the re-checks pass; it does not need a full second round unless the fixes were large.
@@ -203,7 +203,9 @@ Run `factory-retro` for the epic, whether it shipped or stopped; it need not wai
 
 ## Reporting to the user
 
-Lead with the outcome: shipped, partially shipped, or stopped, and what you need from them (every open ask in one list). Then what was verified and how, what was deferred, and what is stuck. State failures as plainly as successes; a validation that could not run is reported as not run.
+Lead with the outcome in one sentence: shipped, partially shipped, or stopped. Then every open ask, one numbered list, each written so it can be answered in a line and each with your recommendation. Then, briefly, what was not verified and any decision you took that they might reverse. Everything else (what was built, evidence, times, deferred items) is in `report.md`; link it rather than repeat it. A report that needs scrolling to find the asks has buried them. State failures as plainly as successes; a validation that could not run is reported as not run.
+
+If the run now stops for those answers, `koujou wait <epic or run record> start`.
 
 ## Resuming
 

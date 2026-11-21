@@ -98,6 +98,16 @@ def main(args):
         for label, key in (("security review done", "security_at"), ("validated", "validated_at"), ("shipped", "shipped_at")):
             if ts(m.get(key)):
                 print(f"  start to {label}: {fmt(dur(s, ts(m.get(key))))}")
+        waited = 0
+        try:
+            waited = int(m.get("waited_s") or 0)
+        except (TypeError, ValueError):
+            pass
+        if ts(m.get("waiting_since")):  # still waiting now
+            from datetime import timezone
+            waited += int(dur(ts(m["waiting_since"]), datetime.now(timezone.utc)) or 0)
+        if waited:
+            print(f"  of which stopped, waiting on the user: {fmt(waited)}")
         if ts(epic.get("closed_at")):
             print(f"  start to closed: {fmt(dur(s, ts(epic.get('closed_at'))))}")
         try:

@@ -59,10 +59,10 @@ When the user asks the factory to work through existing issues instead of a new 
 3. **Bring each issue up to standard** from the scout's report: acceptance criteria, lane, the `security` label where it applies, dependencies between issues whose lanes meet.
 4. **Write `intake.md`** in the work order (`docs/factory/pass-<n>/`), `status: draft`:
    - the issues, one line each, with the lane and wave;
-   - `## Prerequisites`, the same table `factory-spec` writes (see `blockers.md`), from the scouts' (a) and (c);
+   - `## Prerequisites`, the same table `factory-spec` writes (see `blockers.md`), from the scouts' (a) and (c). For each thing that must be created or changed in production, the row says how it gets there and who may do it according to the profile's Deploy policy; where the profile reserves it for the user, the ask is for leave to do it, with the exact command;
    - `## Decisions`, from (b): each with the options, the default the factory will take if the user says nothing, and what it would cost to change later. Take the default only for choices that are cheap to reverse. A choice that touches security, money, data that cannot be recovered, or what users are promised has no default: it is a question, and the task that needs it waits behind a `decision` bead with a gate;
    - `## Cannot be verified locally`, with what would make each verifiable.
-5. **Ask once.** Show the user the intake in one message: what you need, where to put it, the decisions with their defaults, and what happens to each issue if they cannot answer now. Record the answers, create the `factory:needs-user` beads and gates as `blockers.md` describes, drop or defer the issues that cannot proceed, and mark the intake `approved`.
+5. **Ask once.** Show the user the intake in one message: what you need, where to put it, the permissions you are asking for, the decisions with their defaults, and what happens to each issue if they cannot answer now. Write it as `blockers.md` says under "Asking so that it gets answered". Record the answers, create the `factory:needs-user` beads and gates as `blockers.md` describes, drop or defer the issues that cannot proceed, and mark the intake `approved`.
 
 Scouting costs one short agent per issue and replaces questions asked after the work is done, when changing the answer means rebuilding.
 
