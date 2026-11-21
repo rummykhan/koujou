@@ -3,7 +3,7 @@
 Koujou is mostly prose: skills and worker definitions that agents follow. A typo in a script fails loudly; a weak sentence in a worker file fails quietly, weeks later, as a bug a reviewer waved through. These tests exist to make the second kind fail loudly too, before a change is pushed.
 
 ```bash
-tests/run.sh          # tiers 0 and 1: seconds, no model. CI runs this on every pull request.
+tests/run.sh          # tiers 0 and 1: a minute or two, no model. CI runs this on every pull request.
 ```
 
 ```text
@@ -19,7 +19,7 @@ tests/run.sh          # tiers 0 and 1: seconds, no model. CI runs this on every 
 | Tier | What it checks | Needs | Cost |
 |---|---|---|---|
 | **0. Static** (`tests/static/check.py`) | The prose is consistent with itself: every skill, worker, file, label, limit and `koujou` command that one file names exists in another; frontmatter is valid; scripts parse; scenarios are well formed | python3 | under a second |
-| **1. CLI** (`tests/cli/test_koujou.sh`) and scenario setups | `koujou init`, `doctor`, `accept` and `times` against real beads in a temp directory; every scenario's fixture still builds | beads | seconds |
+| **1. CLI** (`tests/cli/test_koujou.sh`) and scenario setups | `koujou init`, `doctor`, `accept`, `times`, `wait` and `converge` against real beads in a temp directory; every scenario's fixture still builds | beads | a minute or two |
 | **2. Module scenarios** (`tests/scenarios/*`, `tier: module`) | One worker or one rule, in a prepared situation, judged by what is true afterwards | Claude Code | one agent, under a minute each |
 | **3. Demo** (`tests/scenarios/demo-todo`) | The whole pipeline, from a raw request to a merged branch | Claude Code | 15 to 25 agent runs |
 
@@ -64,7 +64,7 @@ Changes to the CLI get a line in `tests/cli/test_koujou.sh` instead. A new cross
 |---|---|
 | `agents/factory-reviewer.md` | `reviewer-fails-weak-build`, `reviewer-passes-good-build` |
 | `agents/factory-security.md` | `security-finds-traversal`, `security-passes-clean-build` |
-| `agents/factory-builder.md` | `builder-meets-acceptance` |
+| `agents/factory-builder.md` | `builder-meets-acceptance`, `builder-bug-deeper-cause`, `builder-bug-in-lane` |
 | `skills/factory/reference/swarm.md` | `builder-rebases-conflict` |
 | `skills/factory-run/SKILL.md` and the stages around it | `demo-todo` |
 

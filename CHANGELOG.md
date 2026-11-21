@@ -144,3 +144,17 @@ What happened after the retro above: the run ended on a long report with three a
 - **agents/factory-security (`changes_feature`), skills/factory-run §2**: security fixes leave features as specified; a fix that removes, restricts or adds a step to a feature is allowed only where the feature itself causes serious harm (customer or company data, accounts, money, integrity, trust), and then it is the owner's decision — stated by the user on 2026-11-21, after the connect-flow finding proposed a confirmation page for API users. That one was put to the user, as it should be; the rule makes it the only path. No scenario yet: it needs a fixture whose easy fix is to delete the feature.
 
 Not covered by a test: the ship-stage rules (§1, §1b, §5). The demo has no remote and no production; they need a scenario with a fake deploy tool, which does not exist yet.
+
+## 2026-11-21 — the validate-and-fix loop stops on evidence, not on a count (asked for by the user)
+
+The loop from triage back to build was capped at three rounds. The user called that unfair and misleading, and it was: a round that closes five bugs and finds one small new one is converging, yet used a third of the budget; a twelve-task epic got the same three rounds as a two-task one; and on the second real pass the equivalent per-task cap forced the orchestrator to set a review verdict aside. The user proposed treating bugs as a stack: fix what is underneath, and the bug on top comes back.
+
+- **skills/factory-run §4 (The fix loop), agents/factory-builder (`blocked_by`)**: a builder fixing a bug whose cause is a deeper defect, outside its lane or larger than the bug, reports it instead of guarding the symptom; the orchestrator files it underneath (`bd dep add <bug> <deeper bug>`), and beads' ready list is the top of the stack. Scenarios: `builder-bug-deeper-cause` and its control `builder-bug-in-lane`. Expected effect: no symptom patched over at the place it shows.
+- **bin/koujou (`converge`), profile-template (`max_fix_depth`, `max_agent_runs` replace `max_validate_rounds`)**: after each triage `koujou converge` reads the run and says continue, which bug is stuck, or stop. A bug is stuck when its fix has failed validation twice or the chain under it is deeper than `max_fix_depth`; the loop stops when two rounds running have not reduced the open fix-now bugs, or at the agent budget. Tested in `tests/cli`. Expected effect: no run stopped while it was converging, and none left running while it was not.
+- **bin/koujou-times, koujou-converge**: one beads call for all of a run's issues instead of one per issue.
+- **install.sh**: beads built into `~/go/bin` by its own installer is linked into `~/.local/bin` — CI failed on a runner where that happened and `bd` was on nobody's PATH.
+
+A profile written before this still has `max_validate_rounds`; it is ignored, and the defaults apply for the two new limits.
+- **agents/factory-security**: a proof reads only a file the agent planted — because in a scenario run on 2026-11-21 the agent proved a path traversal by fetching `/etc/passwd` and a file from the home folder, whose contents would have landed in a report. `security-finds-traversal` now fails on a proof that names real system or personal files. Expected effect: no real file read to make a point.
+
+Evidence for the new builder scenario: with the previous builder file the agent worked around the store defect inside its own lane and reported `done`; with the new one it reported `blocked` and `blocked_by`.

@@ -18,7 +18,7 @@ epic ──►│ claim → worktree → BUILD (parallel) → REVIEW → merge q
                                                                         └─► none → report → SHIP (factory-ship)
 ```
 
-Read first: `FACTORY.md`, and in `~/.claude/skills/factory/reference/`: `beads.md`, `swarm.md`, `blockers.md`. Limits (`max_fix_attempts`, `max_validate_rounds`, `max_parallel_builders`, `max_rebases`) come from the profile; default 3 each.
+Read first: `FACTORY.md`, and in `~/.claude/skills/factory/reference/`: `beads.md`, `swarm.md`, `blockers.md`. Limits (`max_fix_attempts`, `max_parallel_builders`, `max_rebases`, `max_fix_depth`, default 3 each; `max_agent_runs`) come from the profile.
 
 Agents: use subagent types `factory-builder`, `factory-reviewer`, `factory-security`, `factory-tester`, `factory-validator`. If they are not available in this session, use a general-purpose agent and start its prompt with "Read `~/.claude/agents/factory/factory-<role>.md` and take that role." (Newly installed agent types only register when a session starts.)
 
@@ -118,7 +118,7 @@ When the tracker is shared with people and the work only becomes real for them o
 
 ### Stuck
 
-A task is stuck when it hits `max_fix_attempts` or `max_rebases`, or its builder reports a blocker it cannot pass. Don't spend a fourth attempt hoping; the pattern has shown it is not converging.
+A task is stuck when it hits `max_fix_attempts` or `max_rebases`, when `koujou converge` names it, or when its builder reports a blocker it cannot pass (a deeper defect is not that: it is filed underneath and built first, see *The fix loop*). Don't spend a fourth attempt hoping; the pattern has shown it is not converging.
 
 ```bash
 bd update <task> --add-label factory:stuck --append-notes "<what was tried, what fails, your read of why>"
@@ -178,13 +178,35 @@ For each bug the validator reported, and each discovered item from builders and 
 
 | Decision | When | Action |
 |---|---|---|
-| **Fix now** | It breaks a success or acceptance criterion, is a regression, or loses data | `bug` bead as a child of the epic, P0/P1, with the validator's steps and an acceptance line. It joins the next wave; brief its builder to reproduce the bug before changing anything. |
+| **Fix now** | It breaks a success or acceptance criterion, is a regression, or loses data | `bug` bead as a child of the epic, P0/P1, with the validator's steps and an acceptance line. It joins the next wave; brief its builder to reproduce the bug before changing anything. If the validator shows that a bug already fixed in this run still reproduces, do not file a second bead: reopen the first (`bd reopen <bug>`) and add one to its `reopened` metadata. |
 | **Defer** | Real, but outside this epic's criteria; cosmetic; rare | `bug` or `task` bead with label `factory:deferred`, no parent, `discovered-from` link. Listed in the report for a later phase. |
 | **Reject** | Not reproducible, or the product is right and the expectation was wrong | Note why in the report. If the requirement itself was ambiguous, that is a question for the user. |
 
 Commands are in the beads reference. A `not verified` criterion is not a bug: either find a way to verify it or name it in the report as unverified.
 
-If anything is fix-now: read the epic's `validate_rounds`, add one, store it. Below `max_validate_rounds` → return to step 1 (the bugs are ready tasks now), then rebuild, restart and validate again; a fix that touches what a security lens covers goes back to that lens first. At the cap → stop. The loop is not converging, which usually means a requirement or design problem that more fixing will not solve. Gate the epic (`bd gate create --blocks <epic> --reason ...`) and bring the user the pattern you see in the failures.
+### The fix loop
+
+Fix-now bugs go back to step 1 as ready tasks; then rebuild, restart and validate again. A fix that touches what a security lens covers goes back to that lens first. From the second round on the validator re-runs the fixed bugs' steps, whatever those fixes touched, and the epic's success criteria, not everything.
+
+**Bugs stack.** A builder sent to fix a bug sometimes finds that it cannot be fixed where it shows: the cause is a deeper defect, in another lane or larger than the bug. It reports `status: blocked` with `blocked_by`. File that defect as its own `bug` bead, child of the epic, and put it underneath the first: `bd dep add <bug> <deeper bug>`. The first bug leaves `bd ready`; the deeper one is built, reviewed and landed; closing it brings the first back to the top, and its builder continues. The same holds one level further down. Nothing here needs a counter: the dependency graph is the stack, and `bd ready` is its top.
+
+**How long the loop may run** is decided by whether it is getting anywhere, not by a number of rounds. An epic with twelve tasks may need five rounds and be healthy throughout; an epic that fixes one bug and gets one back is in trouble at round two. After each triage:
+
+```bash
+koujou converge <epic> --record      # or: --label factory:pass-<n>; add --sandbox where the run's writes use it
+```
+
+It reads the run from beads and prints what to do:
+
+| It says | Because | You do |
+|---|---|---|
+| `continue` | Bugs are closing: fewer are open than a round ago, or this is an early round | Next wave. |
+| `stuck <bug>` | That bug's fix has failed validation twice (`reopened`), or fixing it has uncovered a chain of bugs deeper than `max_fix_depth` | Mark that bug stuck (*Stuck*, above) with the chain in its notes. Everything else carries on. |
+| `stop: no progress` | Two rounds running have not brought the number of open fix-now bugs down | Stop the loop. |
+| `stop: budget` | The run has used more agents than `max_agent_runs` (default: twelve per planned task, at least thirty) | Stop the loop. |
+| `stop: every open bug is stuck` | Nothing is left that can be built | Report as partially delivered. |
+
+On a `stop`, the loop is not converging, which usually means a requirement or design problem that more fixing will not solve. Gate the epic (`bd gate create --blocks <epic> --reason ...`) and bring the user the pattern you see in the failures: which criterion keeps failing, what each fix changed, and what you think is actually wrong. The budget is a backstop against a loop the other signs missed; if the run is plainly converging when it trips, say so and ask for more rather than treating it as a failure.
 
 ## 5. Report and ship
 

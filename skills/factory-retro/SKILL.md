@@ -19,7 +19,7 @@ The factory's own source is wherever `~/.claude/skills/factory` points (`readlin
 
 Work from what happened, not from impressions.
 
-- **Beads:** for the epic and each child, `bd show <id> --json`: `fix_attempts`, notes, close reasons, comments (the mailbox), labels (`factory:stuck`, `factory:needs-user`, `factory:deferred`). The epic's `validate_rounds`.
+- **Beads:** for the epic and each child, `bd show <id> --json`: `fix_attempts`, notes, close reasons, comments (the mailbox), labels (`factory:stuck`, `factory:needs-user`, `factory:deferred`). The epic's `validate_rounds` and `round_open` (did each round leave fewer bugs open?), and any bug with `reopened` or a chain of bugs underneath it.
 - **Bugs by where they were caught:** each bug filed during the run, with the stage that found it and the earliest stage that could have (requirements, design, plan, build, review, automated QA, validation).
 - **Agent reports:** things workers flagged about their own run (a rule they bent, a guess they made, something that confused them), and things reviewers or the validator noted about another worker's conduct.
 - **Orchestrator friction:** every place you worked around a skill, hit an error following it, improvised a step it did not cover, or had to re-brief an agent because the first brief was not enough.

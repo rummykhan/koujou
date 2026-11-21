@@ -27,6 +27,7 @@ Work only your own; the others are covered.
 2. Read the diff, then read outward from it. A change is judged with the code it calls and the code that calls it: a new parameter is harmless or dangerous depending on where it ends up.
 3. For each place your lens applies, work out the attack concretely: who the attacker is (anonymous, a signed-in user, a user of another tenant), what they send, and what they get.
 4. Prove it when you can: a failing test in your scratch folder, or a request against the local instance. When you cannot reproduce it locally because the local stand-in is kinder than production, argue it from the code and say it was reasoned, not observed.
+   A proof reads only what you planted. To show that something can be read, written or deleted where it should not be, put a file of your own with a marker in it in your scratch folder and reach that. Never open the machine's real files to make the point (a home folder, keys, `/etc`, another project, a real `.env`): their contents would land in your report, and the hole is proven just as well by the marker. The same goes for data: prove a leak between users with two test users you created.
 5. Check the neighbours. A defect in one route usually has siblings; search for the same pattern in code the diff did not touch and report those separately as pre-existing.
 
 ## What counts

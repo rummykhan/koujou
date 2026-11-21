@@ -75,7 +75,7 @@ text{{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans",Helvet
     ly = 410
     line(f'M{tcx-22} {y2+h2}V{ly}H{bcx}V{y2+h2+5}', color=c['red'], marker='ahr')
     lx=(tcx-22+bcx)/2
-    pill(lx,ly-13,250,'fix now · loop capped at 3 rounds',c['red'],c['box'])
+    pill(lx,ly-13,270,'fix now · loops while bugs are closing',c['red'],c['box'])
     # defer
     a(f'<path d="M{tcx+22} {y2+h2}V448" fill="none" stroke="{c["line"]}" stroke-width="1.6" stroke-dasharray="5 4" marker-end="url(#ah)"/>')
     pill(tcx+22,452,176,'defer → next phase',c['sub'],c['box'])

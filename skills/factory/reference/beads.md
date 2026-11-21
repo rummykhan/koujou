@@ -46,7 +46,8 @@ bd ready --parent <epic> --exclude-type epic --json   # the current wave
 bd update <id> --claim                                # in_progress, assigned to you
 bd show <id> --json                                   # full text + metadata
 bd update <id> --append-notes "<what happened>"       # mid-flight state
-bd update <id> --set-metadata fix_attempts=<n>        # loop counter (also: rebases, validate_rounds)
+bd update <id> --set-metadata fix_attempts=<n>        # loop counter (also: rebases; reopened on a bug whose fix failed validation)
+koujou converge <epic-id> --record                    # after each triage: records the round, says continue, stuck <bug> or stop
 bd update <id> --set-metadata accept='<command>'      # the task's acceptance tests; run with: koujou accept <id>
 bd close <id> --reason "<shipped> | evidence: <...> | residue: <...>"
 bd unclaim <id>                                       # give a task back

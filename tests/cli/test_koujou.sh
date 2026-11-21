@@ -73,4 +73,34 @@ check "wait end when not waiting says so" bash -c '"$0" wait "$1" end | grep -q 
 check "wait on an unknown id is an error" bash -c '! "$0" wait td-nope start' "$TESTS_DIR/../bin/koujou"
 check "times on an unknown id is an error" bash -c '! "$0" times td-nope' "$TESTS_DIR/../bin/koujou"
 
+echo "  koujou converge"
+K="$TESTS_DIR/../bin/koujou"
+bug() { bd create "$1" -t bug --parent $epic -d d --acceptance "- x" --silent; }
+b1=$(bug "bug one"); b2=$(bug "bug two"); b3=$(bug "bug three")
+check "round 1 with three bugs goes on" bash -c '"$0" converge "$1" --record | grep -q "^continue: 3 open"' "$K" $epic
+bd close $b1 --reason fixed >/dev/null; bd close $b2 --reason fixed >/dev/null
+check "a round that closes bugs goes on, however many rounds" bash -c '"$0" converge "$1" --record | grep -q "after each round: 3, 1"' "$K" $epic
+check "without --record nothing is written" bash -c '"$0" converge "$1" >/dev/null; "$0" converge "$1" | grep -q "after each round: 3, 1;"' "$K" $epic
+check "a deferred bug is not counted" bash -c 'x=$(bd create "later" -t bug --parent "$1" -l factory:deferred -d d --acceptance "- x" --silent); "$0" converge "$1" | grep -q "^continue: 1 open"' "$K" $epic
+"$K" converge $epic --record >/dev/null
+check "two rounds without the number falling stops the loop" bash -c '! "$0" converge "$1" --record' "$K" $epic
+check "…and says what the numbers were" bash -c '"$0" converge "$1" | grep -q "stop: no progress.*3, 1, 1, 1"' "$K" $epic
+bd update $epic --set-metadata round_open=3 >/dev/null
+bd update $b3 --set-metadata reopened=2 >/dev/null
+b4=$(bug "bug four")
+check "a bug whose fix failed twice is stuck; the rest go on" bash -c 'o=$("$0" converge "$1"); echo "$o" | grep -q "^stuck $2: its fix has failed validation twice" && echo "$o" | grep -q "^continue: 1 open"' "$K" $epic $b3
+bd close $b4 --reason fixed >/dev/null
+check "when every open bug is stuck the loop stops" bash -c '! "$0" converge "$1" >/dev/null && "$0" converge "$1" | grep -q "stop: every open bug is stuck"' "$K" $epic
+bd update $b3 --set-metadata reopened=0 >/dev/null
+c1=$(bug "under 1"); c2=$(bug "under 2"); c3=$(bug "under 3")
+bd dep add $b3 $c1 >/dev/null; bd dep add $c1 $c2 >/dev/null
+check "a chain three deep is allowed" bash -c 'o=$("$0" converge "$1"); echo "$o" | grep -q "^continue: 4 open" && ! echo "$o" | grep -q "^stuck"' "$K" $epic
+bd dep add $c2 $c3 >/dev/null
+check "a chain four deep marks its top stuck" bash -c '"$0" converge "$1" | grep -q "^stuck $2: fixing it has uncovered a chain of 4"' "$K" $epic $b3
+bd close $c3 --reason fixed >/dev/null
+check "…and it is unstuck when the bottom closes" bash -c '! "$0" converge "$1" | grep -q "^stuck"' "$K" $epic
+printf -- '- `max_agent_runs`: 2\n' >> FACTORY.md
+check "over the agent budget stops the loop" bash -c '! "$0" converge "$1" >/dev/null && "$0" converge "$1" | grep -q "stop: budget: 3 agent runs so far, limit 2"' "$K" $epic
+check "converge on an unknown id is an error" bash -c '! "$0" converge td-nope' "$K"
+
 finish

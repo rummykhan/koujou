@@ -90,7 +90,7 @@ Full detail and command recipes are in `~/.claude/skills/factory/reference/beads
 - An **epic** is the unit of delivery; **tasks** are its children; **bugs** found during the run are children too (fix now) or parentless with `factory:deferred` (next phase).
 - Dependencies mean "cannot start until", never "I'd do this first". Two tasks that would edit the same files get a dependency between them, so everything `bd ready` returns together is safe to build in parallel.
 - Every task carries acceptance criteria that each name their check, and one acceptance command (metadata `accept`) that runs the task's own tests, named with its id. `koujou accept <id>` runs it; it is what closes the task. `bd lint` enforces the sections.
-- Loop counters live in metadata: `fix_attempts` and `rebases` on a task, `validate_rounds` on an epic. Limits come from `FACTORY.md`.
+- Loop counters live in metadata: `fix_attempts` and `rebases` on a task, `reopened` on a bug whose fix failed validation, `validate_rounds` and `round_open` (open fix-now bugs after each round) on an epic. Limits come from `FACTORY.md`; the validate-and-fix loop has no round limit and stops on evidence that it is not converging (`koujou converge`).
 - Time lives there too: beads stamps claim and close, the run stamps built, reviewed, merged, validated and shipped. `koujou times <epic-id>` adds it up.
 - A close reason records what shipped, the evidence, and any residue.
 

@@ -50,8 +50,7 @@ def main(args):
         title = f"{epic['id']} — {epic['title']}"
 
     rows, firsts, lasts, runs_total = [], [], [], 0
-    for i in ids:
-        d = bd("show", i)[0]
+    for d in (bd("show", *ids) if ids else []):  # one call for all of them
         if d.get("issue_type") == "epic":
             continue
         if "factory:run" in (d.get("labels") or []):  # a pass's run record stands in for the epic
@@ -115,7 +114,8 @@ def main(args):
         except (TypeError, ValueError):
             pass
         if "validate_rounds" in m:
-            print(f"  validation rounds that found bugs: {m['validate_rounds']}")
+            print(f"  validation rounds that found bugs: {m['validate_rounds']}"
+                  + (f" (open fix-now bugs after each: {str(m['round_open']).replace(',', ', ')})" if m.get("round_open") else ""))
     if runs_total:
         print(f"  agents spawned: {runs_total}")
     print("  build = claim to builder done (incl. retries) · review = to review pass · "

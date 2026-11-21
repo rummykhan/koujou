@@ -74,7 +74,7 @@ Start with `PORT=<port> npm start` and use `curl`. State is in memory; no accoun
 ## Limits
 
 - `max_fix_attempts`: 3
-- `max_validate_rounds`: 2
+- `max_fix_depth`: 3
 - `max_rebases`: 3
 - `max_parallel_builders`: 3
 - Worktree root: `../.factory-worktrees/<repo-name>`

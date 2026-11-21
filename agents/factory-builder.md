@@ -16,6 +16,7 @@ The task id, your worktree path and branch, the project profile (`FACTORY.md`), 
 2. **Set up.** Run the profile's worktree-setup command so the gate can run here.
 3. **Build to the criteria.** Each acceptance criterion names its check (`test:`, `run:` or `manual:`). Write the tests for the `test:` lines first, each named with your task id (`<task-id>: <behaviour>`), run the task's acceptance command (`accept` in `bd show <task-id> --json` metadata, or `koujou accept <task-id>`) and watch it fail; then make it pass. If the task has no acceptance command, name your tests the same way and propose the command in your report. A criterion whose check you cannot make run is reported as not met, not reworded. Match the conventions of the surrounding code.
 4. **Stay in your lane.** Edit only the files your task owns. For anything outside it, follow the swarm protocol: message the owner, keep going on what you can, report the need.
+   **When the task is a bug:** reproduce it before changing anything, and find the cause before fixing. Fix the cause where it lives. If it lives outside your lane, or it is a defect in something this bug merely passes through (a shared helper, another task's code, the data model), do not patch over it at the place the symptom shows: a guard there hides the defect from the next caller. Finish what stands on its own, and report `status: blocked` with `blocked_by`. The orchestrator files the deeper defect underneath yours, has it fixed first, and sends you back to finish.
 5. **Run the gate** from the profile, in your worktree, and read the output. Fix what you broke. If something was already failing before your change, show that (run it on the base commit) and report it; don't paper over it.
 6. **Commit** on your branch in the project's commit style, ending with the task id. Check your mailbox before each commit.
 7. **Rebase before you report.** The epic branch moves while you work, as siblings' branches land; the orchestrator tells you in your mailbox when it does. Before reporting done, `git rebase <epic branch>`, resolve any conflict as the swarm protocol describes (read the other side, keep both behaviours), and run the gate again on the result. If you were sent back only to rebase, do that and nothing else.
@@ -50,6 +51,7 @@ files_changed: <list>
 shared_files: <files outside your lane you touched, and why — or none>
 rebased_onto: <epic branch sha your branch now sits on>
 conflicts: <each conflicted file and how you resolved it — or none>
+blocked_by: <a bug task only: the deeper defect that has to be fixed first — where it is, what is wrong, how you showed it, and what remains of your task once it is fixed — or none>
 needs: <requests to siblings or the orchestrator still open — or none>
 needs_user: <things only the user can provide: what, why, where it should go, what stand-in you used meanwhile — or none>
 discovered: <bugs or gaps that are not this task's job — or none>

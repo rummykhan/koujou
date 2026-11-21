@@ -81,7 +81,7 @@ koujou update
 * **Knows where the time went:** every task's build, review and queue time is recorded in beads; `koujou times` adds it up, with time spent waiting on you counted apart from work.
 * **You are asked once:** API keys, access and decisions are requested up front, in one batch, including when the work comes from your existing backlog. What you can't provide is built against a fake and listed under "Waiting on you". Permission counts too: "may the factory create this table, or will you?" is asked at the start, not when the branch is finished.
 * **Asks you can answer in a line:** anything that would block the merge reaches you while work continues, not in the final report. Wording and similar asks arrive as a draft to approve, and security findings are told in plain steps: who does what, and what you would lose.
-* **Loops are capped:** a task that keeps failing review, or an epic that keeps failing validation, stops and comes to you instead of burning tokens.
+* **Loops stop on evidence, not on a count:** validation and fixing go round as long as bugs are closing. A bug that hides a deeper bug waits while the deeper one is fixed first, then comes back to the top. The loop stops and comes to you when it is not converging: a fix that fails twice, a chain of bugs that keeps getting deeper, two rounds with no fewer bugs open, or the run's agent budget.
 * **Living system design:** `AGENTS.md` holds an as-built description of your system, rewritten whenever an epic ships.
 * **Self-improving:** every epic ends with a retro that edits the factory's own skills and worker instructions, logged in [`CHANGELOG.md`](CHANGELOG.md).
 * **Fits your project:** `FACTORY.md` holds your commands, git and deploy policy; the skills stay generic.
@@ -96,6 +96,7 @@ In your terminal:
 | `koujou doctor` | Check the installation and the current project. |
 | `koujou accept <task-id>` | Run a task's acceptance tests (or `--parent <epic-id>` for all of an epic's). |
 | `koujou times <epic-id>` | Time per task (build, review, queue), bounces, rebases and agents used. |
+| `koujou converge <epic-id>` | After a validation round: may the fix loop go on? Says continue, which bug is stuck, or stop, from the run's record. |
 | `koujou wait <epic-id> start\|end` | Mark when a run stops to wait for you and when it resumes, so `koujou times` reports waiting apart from work. |
 | `koujou update` | Pull the latest koujou and relink. |
 | `koujou uninstall` | Remove the links. Beads and your projects are untouched. |

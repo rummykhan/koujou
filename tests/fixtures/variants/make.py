@@ -6,6 +6,10 @@ Variants are the same feature built well or built with one planted defect, so a 
   done-weak      same feature, but `done` is always set to true, the new test only covers true, and an existing test was loosened
   export-hole    GET /export?name=<file> reads any file the process can read (path traversal)
   list-filter    GET /todos?done=true|false filter (a second, harmless change touching the same route as done-*)
+  store-list-bug    a defect in the store, applied with done-good: the list leaves the title off todos that are done
+  search-store-bug  GET /todos?q=<text> (correct); over store-list-bug a search answers 500 once a todo is done, and the
+                    cause is in src/store.js
+  search-lane-bug   the same symptom, but the cause is in the search filter itself (src/server.js)
 usage: make.py <variant> <task-id>
 """
 import re
@@ -174,5 +178,33 @@ test('{tid}: GET /todos?done=false lists only todos that are not done', async ()
   }}
 }});
 """)
+elif variant in ("search-store-bug", "search-lane-bug"):
+    match = "todo.title.includes(q)" if variant == "search-store-bug" else "(todo.done ? todo.title.incudes(q) : todo.title.includes(q))"
+    sub("src/server.js", "    if (req.method === 'GET') return send(res, 200, { todos: store.list() });\n", f"""    if (req.method === 'GET') {{
+      const q = new URL(req.url, 'http://localhost').searchParams.get('q');
+      const todos = store.list();
+      return send(res, 200, {{ todos: q ? todos.filter((todo) => {match}) : todos }});
+    }}
+""")
+    open("test/search.test.js", "w").write(f"""import test from 'node:test';
+import assert from 'node:assert/strict';
+import {{ start }} from './helpers.js';
+
+test('{tid}: GET /todos?q= lists only the todos whose title contains the text', async () => {{
+  const app = await start();
+  try {{
+    for (const title of ['buy milk', 'walk dog']) await fetch(`${{app.url}}/todos`, {{ method: 'POST', body: JSON.stringify({{ title }}) }});
+    const listed = await (await fetch(`${{app.url}}/todos?q=milk`)).json();
+    assert.deepEqual(listed.todos.map((todo) => todo.title), ['buy milk']);
+  }} finally {{
+    await app.close();
+  }}
+}});
+""")
+
+elif variant == "store-list-bug":
+    sub("src/store.js", "return [...todos.values()].map((todo) => ({ ...todo }));",
+        "return [...todos.values()].map((todo) => (todo.done ? { id: todo.id, done: true } : { ...todo }));")
+
 else:
     sys.exit(f"unknown variant {variant}")
