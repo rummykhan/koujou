@@ -23,7 +23,7 @@ Say which tiers you are running and roughly what they cost before starting anyth
 tests/run.sh
 ```
 
-Static checks, the CLI against real beads, and every scenario's setup. Seconds, no model. If this fails, fix it before spending agents; do not run scenarios on a factory whose references are broken.
+Static checks, the CLI against real beads, and every scenario's setup. A few minutes, no model. If this fails, fix it before spending agents; do not run scenarios on a factory whose references are broken.
 
 ## Module scenarios
 

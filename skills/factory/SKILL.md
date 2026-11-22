@@ -34,6 +34,7 @@ Ceremony should match risk. Pick the smallest lane that fits and tell the user w
 | Lane | Fits | Stages |
 |---|---|---|
 | **S** | A bug, or a change with one obvious implementation, touching one area | One bead with acceptance criteria → `factory-run` on that bead |
+| **Check** | "Test the billing module", "is sign-in still working": one module examined as it stands, nothing to build | One `factory-validator` on the running product, briefed with the module's Test map row and, as criteria, what the System design and any requirements say the module does. Bugs it finds become `factory:deferred` beads; fixing them is a pass |
 | **Pass** | Several existing backlog issues, possibly from different epics | `factory-plan` intake (scout, ask once) → `factory-run --label factory:pass-<n>` |
 | **M** | A feature in existing architecture; a few tasks; no new components, data stores or external services | `factory-spec` → `factory-plan` (design notes go in the epic's design field) → `factory-run` |
 | **L** | New product, new subsystem, a new data model or integration, or anything expensive to undo | `factory-spec` → `factory-design` → `factory-plan` → `factory-run` |
@@ -78,7 +79,7 @@ Two rules carry most of the weight:
 
 Three more hold the rest together:
 
-- **QA is independent of the builders.** The tester writes acceptance tests from the requirements without reading the implementation; the validator uses the running product. Details in the agent files.
+- **QA is independent of the builders.** The tester writes acceptance tests from the requirements without reading the implementation; the validator uses the running product, then reads back what it stored (the database, the cloud account, GitHub) wherever the factory has read access. How each module is tested is worked out from the project and kept in the profile's Test map; the user is asked only about what could not be inferred, before work starts. Details in the agent files.
 - **Ask the user once, early.** Everything only the user can provide (keys, accounts, access, decisions, assets) is swept for at the requirements and design gates and asked for in one batch. What they cannot provide now is built against a fake or moved to the next pass; what surfaces mid-run bubbles up through a `factory:needs-user` gate while other work continues. Protocol: `~/.claude/skills/factory/reference/blockers.md`.
 - **The system design stays current.** `AGENTS.md` holds a short, as-built description of the system: components, data model, flows, interfaces, external dependencies. It is rewritten where needed in the same change that alters the system, so every agent starts from the real architecture. Format: `~/.claude/skills/factory/reference/agents-template.md`.
 - **Every run teaches the factory.** `factory-retro` ends each epic by turning the run's evidence into changes to the project profile, the factory's skills, and the workers' instructions.

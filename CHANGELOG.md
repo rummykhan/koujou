@@ -178,3 +178,69 @@ What the run showed, in order: the validator failed the criterion; the bug was f
 
 Known and left alone: `koujou times` counts the time a bug spends waiting on the bug underneath it as build time (td-yu2.4 shows 4 m, of which about 2 m was waiting).
 
+
+## 2026-11-21 — the factory works out how to test a project, and looks behind the interface (asked for by the user); setup on a second real project
+
+The user asked that the factory infer how each module is tested from the project itself, ask only where it is unsure and before work starts, and check results behind the web UI: the database, the cloud account, GitHub.
+
+- **profile-template (`## Test map`), skills/factory-adopt, factory-new, factory-plan, factory-run (preflight)**: one row per module: how it is exercised, where its state lives, the read-only command that reads it back, and the access this machine has. Setup infers the rows and tries each cross-check once; a row it could not infer goes to Open questions. Plan and preflight check that every module a run touches has a usable row, and ask the user then, not when validation starts. `koujou doctor` flags a profile without the section.
+- **agents/factory-validator**: step 5, look behind the interface. For a criterion that creates, changes or removes something, read it back where it lives; a disagreement is a bug and the criterion fails; read only, with the access the Test map names; no access is "interface only", not a failure. Report gains `behind:` on each criterion and `cross_checks`.
+- **skills/factory (Sizing)**: a Check lane: one module examined as it stands by a validator, nothing built.
+- Scenarios: `validator-finds-kept-record` (a delete the API reports as done leaves the record in the store) and its control `validator-passes-stored-build`. Both pass, 9 of 9 and 8 of 8 checks.
+
+What the scenario does and does not show. The planted bug was also caught by the validator file as it was before this change, three times out of three, including once against a profile with no Test map: the fixture's profile says in a sentence where the state is, and that was enough. So on this fixture the new step is not what finds the bug. What the previous file fails is the report: no `behind:` line, no `cross_checks`. The claim that holds is narrower than hoped: the change makes the cross-check a recorded, required part of every validation and makes sure the profile says where state lives for every module; it is not shown to find anything the old validator would have missed. A fixture whose profile is silent about storage, or a store that needs a query to read, would test that.
+
+From `factory-setup` on a second real project (lab run 5):
+
+- **skills/factory-adopt §2**: a red gate may be your own shell — the app builds failed in a network-sandboxed shell with an error naming the font loader, and passed with network access. Expected effect: no baseline recorded red for a reason that is not the project's.
+- **skills/factory-adopt §2**: prove app builds in the throwaway worktree, never in the user's checkout, where a build overwrites the output under whatever they are running.
+- **skills/factory-adopt §1, §3, profile-template**: find out what a local run touches. The project has no local database; an app started on a laptop reads, and some apps write, production. The profile now says so, lists every writing path under "Never use", and asks the user where writes may be tested.
+- **skills/factory-adopt §1, profile-template (Project)**: the tracking and the code can be two repositories; the profile says which one each command, branch and worktree belongs to.
+- **README, tests/README, factory-run description**: status brought up to date (two passes on the live product, a deploy the factory watched); "capped fix loop" removed; the fast tests take minutes, not seconds.
+
+Not run for this change: `demo-todo`, which the test skill asks for when `factory-run` or `factory-plan` change. The edits there are a preflight line and a planning section. No scenario covers `factory-adopt`.
+
+## 2026-11-21 — first epic on the second real project, in progress (visibility passes, 14 tasks): lessons taken while it runs
+
+- **`koujou accept` counted the worktree's own path as a test name.** A worktree is named after its task, and Vitest prints the directory it runs in, so `npx vitest run -t "<id>"` "mentioned" the id while printing no test names. It passed for the builder and the reviewer in the task worktree and failed for the orchestrator in the epic worktree, which is how it was seen. `koujou accept` now ignores the id where it is a path segment and where it is the echoed command; a CLI test pins it. The plan skill says Vitest needs `--reporter=verbose`.
+- To write up when the run ends (`factory-retro`): a placeholder test in one task pinned a shape the next task existed to change; a component in the spec's table that no task's criteria named (the source line); how the tester's requests for handles reached the builders; a pre-existing security hole found only because the epic gave the origin something worth stealing.
+
+## 2026-11-21 — first epic on the second real project, finished (visibility passes: 15 tasks, 44 agents, 2 h to validated, pull request open)
+
+Result: 12 planned tasks, 3 added during the run (one from a builder's remark, two security fixes), all landed; 3 bounces in review, no rebase conflict; security review passed with two fixes built inside the epic; validation passed in one round, with a validator that compared 219 live results against its own independent calculation and read the stored records behind the pages. What the run taught, and what changed:
+
+- **`koujou converge` counted landed bugs as open.** Where issues stay open until the user merges (`factory:awaiting-merge`), a finished run reported "2 open fix-now bugs". It now treats the label as done; a CLI test pins it. `factory-run` says that `bd ready` cannot see the label either, how to work out the next wave, and that `git branch -d` refuses a branch merged only into the epic branch.
+- **A builder went quiet for 45 minutes** on one long shell script and nobody looked. `factory-run` has a section on a worker gone quiet: when to look, what to check, and to replace it in the same worktree.
+- **Which security findings are fixed now.** The table deferred everything pre-existing and everything medium. Two exceptions are written in: a pre-existing hole whose harm the epic creates (stored text breaking out of a script element mattered once the origin held a visitor's location), and an introduced medium finding with a small fix that changes no feature. The per-task security agent is briefed with what the task protects and told to read outward; that is how the one high finding was found.
+- **A row in the design that no task owned.** The plan's coverage check now includes the design's tables, not only the requirements. Also in the plan skill: an earlier task must not pin its placeholder with a test; the contracts must give the handles a test reads values through, not only the ones it finds controls by.
+- **Scratch copies.** Reviewers and security agents copy the worktree to mutate it. Two things went wrong: a copy carried the worktree's `.git` file (pointing at the real branch), and fourteen tasks left six gigabytes. Both worker files say: copy without `.git`, delete when done; the run skill says to clean scratch during the run.
+- **A command moved to the background lost its network** and a green suite failed with a DNS error. Written into validation: start long network commands in the background yourself.
+
+What worked and is worth keeping: reviewers proving acceptance tests honest by mutating the code in a scratch copy (it caught a test that passed with the rule deleted, on the first task); the QA suite's reviewer building wrong stand-in products and finding four the suite let through; the Test map's cross-check, which had the validator recompute results from the stored elements instead of trusting the page.
+
+Not done at the time of writing; see the next entry for what was then built and run.
+
+## 2026-11-22 — the test system catches up with the second real project (asked for by the user: "a realistic and great build system, and a good test system"); every tier run on the result
+
+What the second project showed about the tests, more than about the factory: the fixture was tidier than any real repository, one worker had no scenario at all, and reviewers' most useful habit (breaking the code to see whether the tests notice) was pinned by nothing.
+
+- **`koujou ready <epic>`** (new). `bd ready` shows nothing after the first wave in a project that leaves landed tasks open until the user merges, and the orchestrator tracked waves by hand for fifteen tasks. `koujou ready` counts a task as finished when it is closed or labelled `factory:awaiting-merge`, lists what can start, and says what each waiting task waits on. Used throughout this entry's demo run. Documented in the README, the beads reference and `factory-run`.
+- **Tier 1 takes the real project's shape.** New CLI tests: `koujou accept` from a second git repository with `BEADS_DIR` (code and tracker apart), and without it failing; `koujou ready` through a chain of three tasks with one landed-and-open; `koujou converge` ignoring a landed bug; the worktree-path false positive. The test guide now says it as a rule: when a real run trips on a project's shape, the shape goes into tier 1 before the fix is called done.
+- **`tester-writes-acceptance`** (new scenario; the tester had none). The tester writes acceptance tests for a feature that does not exist. `expect.sh` then builds the feature twice under those tests, correctly and with a planted defect, and requires pass on the first and fail on the second, for both planted defects. First run: 14 tests, pass on good, fail on wrong. The guide's new principle: judge a worker by what its output does when run, where it produces anything runnable; reports judge only workers whose product is a judgement.
+- **`reviewer-fails-hollow-tests`** (new scenario). A correct product whose acceptance tests would stay green on a broken one (`status < 500`, `typeof done === 'boolean'`). The reviewer failed it for that reason and reported no defect in the product. The rule was already in the reviewer file (step 6); this pins it, so there is no "fails without the change" run to show.
+- **Triage and `bd lint`.** On this entry's `demo-todo` run the orchestrator filed deferred bugs as one-line summaries and the demo's `bd lint` check failed. The reference already said a bug needs `## Steps to Reproduce`; `factory-run` now says so where the bugs are filed, for deferred ones too, and to run `bd lint` after triage. `demo-fix-loop` gained the same check.
+- **Fixture.** `npm run lint` covers nested test folders (two testers and a reviewer reported the syntax check skipped `test/acceptance/`); the profile's baseline explains why the runner prints 7 for 6 tests (three workers stopped on it).
+
+Results, all on this working tree:
+
+| Tier | Result |
+|---|---|
+| 0 static | 0 failed, 0 warnings (the "no scenario for the tester" warning is gone) |
+| 1 CLI and scenario setups | pass |
+| 2 module scenarios, all 12 | 12 pass, none flaky: builder ×4, reviewer ×3, security ×2, validator ×2, tester ×1 |
+| 3 `demo-fix-loop` | 17 of 17; 6 agents, 2 rounds, the deeper bug filed underneath and fixed first |
+| 3 `demo-todo` | 20 of 20 after the triage fix above; 5 tasks, 15 agents, no bounce, no conflict, one validation round |
+
+The demo exercised two things from the previous entry without being steered to: the security review found a pre-existing gap whose harm the epic raised (the server answers under any Host name; the new routes delete) from two lenses independently, and it was fixed in the epic under the new rule; and the tester's questions were answered through the mailboxes while the builders were still building, after which its suite passed on the assembled branch at the first run.
+
+Still open: `agent_runs` is kept per task, so `koujou times` does not count epic-level agents (security lenses, the validator): it said 11 where 15 ran. No scenario reaches a worker gone quiet, the design-coverage check in planning, or a browser. `factory-adopt`, `factory-spec` and `factory-plan` have no scenario of their own; the demo covers the last two only as part of the whole.

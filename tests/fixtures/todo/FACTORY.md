@@ -22,7 +22,7 @@ Known gaps in the gate: no linter beyond a syntax check; no browser tests (there
 
 ## Baseline
 
-Fixture: the gate is green by construction (6 tests).
+Fixture: the gate is green by construction (6 tests in two files; `node --test` also counts `test/helpers.js`, which holds none, so it prints 7).
 
 ## Git policy
 
@@ -44,6 +44,12 @@ Fixture: the gate is green by construction (6 tests).
 ## Validation
 
 Start with `PORT=<port> npm start` and use `curl`. State is in memory; no accounts.
+
+## Test map
+
+| Module | Exercise it through | Its state lives in | Cross-check, read-only | Access |
+|---|---|---|---|---|
+| todos (`src/store.js`, `src/server.js`) | the API: `/todos` with `curl` | memory only; nothing is stored outside the process | none possible | local: yes |
 
 ## QA
 

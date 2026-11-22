@@ -26,6 +26,9 @@ mkdir "$WORK/old" && cd "$WORK/old" && git init -q -b main && koujou init >/dev/
 grep -v -e '^## Security review' -e 'max_rebases' "$TESTS_DIR/fixtures/todo/FACTORY.md" > FACTORY.md
 check "doctor flags a profile from an older factory, naming what is missing" bash -c '"$0" doctor 2>&1 | grep -q "predates.*Security review.*max_rebases"' "$TESTS_DIR/../bin/koujou"
 
+grep -v -e '^## Test map' "$TESTS_DIR/fixtures/todo/FACTORY.md" > FACTORY.md
+check "doctor flags a profile with no Test map" bash -c '"$0" doctor 2>&1 | grep -q "predates.*Test map"' "$TESTS_DIR/../bin/koujou"
+
 echo "  koujou accept"
 todo_repo "$WORK/a" >/dev/null || fail "fixture repo"
 good=$(new_task "passes" "d" "- x — test: unit" "Lane: test/")
@@ -43,8 +46,41 @@ check "a passing acceptance command passes" koujou accept $good
 check "a failing one fails" bash -c '! "$0" accept "$1"' "$TESTS_DIR/../bin/koujou" $red
 check "a command that selects no tests fails" bash -c '! "$0" accept "$1"' "$TESTS_DIR/../bin/koujou" $empty
 check "…and says why" bash -c '"$0" accept "$1" | grep -q "no test named"' "$TESTS_DIR/../bin/koujou" $empty
+quiet=$(new_task "prints only where it ran" "d" "- x — test: unit" "Lane: test/")
+bd update $quiet --set-metadata accept="pwd" >/dev/null
+mkdir -p "wt/$quiet"
+check "the id in the worktree's path is not a test name" bash -c 'cd "wt/$1" && ! "$0" accept "$1"' "$TESTS_DIR/../bin/koujou" $quiet
 check "a task without a command fails the run" bash -c '! "$0" accept "$1"' "$TESTS_DIR/../bin/koujou" $none
 check "an unknown id is an error" bash -c '! "$0" accept td-nope' "$TESTS_DIR/../bin/koujou"
+
+echo "  koujou accept from a second repository (code and tracker apart)"
+# The second real project keeps beads in a workspace repository and the code in another git repository checked out
+# inside it: from a code worktree bd finds no database unless BEADS_DIR says where it is.
+TRACKER="$PWD"; mkdir -p "$WORK/code/test" && (cd "$WORK/code" && git init -q -b main && cp "$TRACKER/test/accept.test.js" test/ && printf '{"type":"module"}' > package.json)
+check "without BEADS_DIR the code repository cannot see the task" bash -c 'cd "$1" && ! "$0" accept "$2" 2>/dev/null' "$TESTS_DIR/../bin/koujou" "$WORK/code" $good
+check "with BEADS_DIR the task's tests run where the code is" bash -c 'cd "$1" && BEADS_DIR="$3/.beads" "$0" accept "$2"' "$TESTS_DIR/../bin/koujou" "$WORK/code" $good "$TRACKER"
+
+echo "  koujou ready"
+repic=$(bd create "a run that closes on merge" -t epic -d "x
+
+## Success Criteria
+- y" --silent)
+ra=$(bd create "first" -t task --parent $repic -d d --acceptance "- x" --silent)
+rb=$(bd create "second, needs first" -t task --parent $repic -d d --acceptance "- x" --silent)
+rc=$(bd create "third, needs second" -t task --parent $repic -d d --acceptance "- x" --silent)
+rd=$(bd create "for later" -t task --parent $repic -l factory:deferred -d d --acceptance "- x" --silent)
+bd dep add $rb $ra >/dev/null; bd dep add $rc $rb >/dev/null
+K="$TESTS_DIR/../bin/koujou"
+check "at the start only the task with no dependency is ready" bash -c 'test "$("$0" ready "$1" 2>/dev/null | grep -c .)" = 1 && "$0" ready "$1" 2>/dev/null | grep -q "^$2 "' "$K" $repic $ra
+bd update $ra --claim >/dev/null
+check "a claimed task is in flight, and nothing is ready behind it" bash -c 'test -z "$("$0" ready "$1" 2>/dev/null)" && "$0" ready "$1" 2>&1 | grep -q "0 ready, 1 in flight, 2 waiting"' "$K" $repic
+bd update $ra --add-label factory:awaiting-merge >/dev/null
+check "landed and awaiting merge counts as done: its dependent is ready" bash -c '"$0" ready "$1" 2>/dev/null | grep -q "^$2 "' "$K" $repic $rb
+check "…where bd ready alone still shows nothing" bash -c '! bd ready --parent "$1" --exclude-type epic --json | grep -q "$2"' _ $repic $rb
+check "the task two steps behind still waits, and says on what" bash -c '"$0" ready "$1" 2>&1 | grep -q "$2 waits on $3"' "$K" $repic $rc $rb
+check "a deferred task is never offered" bash -c '! "$0" ready "$1" 2>/dev/null | grep -q "^$2 "' "$K" $repic $rd
+bd close $rb --reason done --force >/dev/null 2>&1
+check "a closed dependency frees its dependent too" bash -c '"$0" ready "$1" 2>/dev/null | grep -q "^$2 "' "$K" $repic $rc
 
 echo "  koujou times"
 epic=$(bd create "an epic" -t epic -d "x
@@ -82,6 +118,7 @@ bd close $b1 --reason fixed >/dev/null; bd close $b2 --reason fixed >/dev/null
 check "a round that closes bugs goes on, however many rounds" bash -c '"$0" converge "$1" --record | grep -q "after each round: 3, 1"' "$K" $epic
 check "without --record nothing is written" bash -c '"$0" converge "$1" >/dev/null; "$0" converge "$1" | grep -q "after each round: 3, 1;"' "$K" $epic
 check "a deferred bug is not counted" bash -c 'x=$(bd create "later" -t bug --parent "$1" -l factory:deferred -d d --acceptance "- x" --silent); "$0" converge "$1" | grep -q "^continue: 1 open"' "$K" $epic
+check "a landed bug waiting for the merge is not counted" bash -c 'x=$(bd create "landed" -t bug --parent "$1" -l factory:awaiting-merge -d d --acceptance "- x" --silent); bd update $x --claim >/dev/null; "$0" converge "$1" | grep -q "^continue: 1 open"' "$K" $epic
 "$K" converge $epic --record >/dev/null
 check "two rounds without the number falling stops the loop" bash -c '! "$0" converge "$1" --record' "$K" $epic
 check "…and says what the numbers were" bash -c '"$0" converge "$1" | grep -q "stop: no progress.*3, 1, 1, 1"' "$K" $epic

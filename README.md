@@ -76,7 +76,8 @@ koujou update
 * **Security team:** before validation, several agents read the whole change, each through one lens: access, untrusted input, data exposure. Confirmed holes are fixed before anything ships. Security closes holes without changing what your product does: a fix that would remove or restrict a feature is allowed only for serious harm (data, accounts, money, trust), and then you decide.
 * **Acceptance tests close tasks:** every task's criteria name their checks before any code exists, and its tests carry the task id, so `koujou accept <task>` proves it done, at review, at landing and again before shipping.
 * **Nobody grades their own work:** a separate reviewer checks every task against those criteria.
-* **QA department:** a test engineer writes the acceptance suite from the requirements (Playwright for UIs); a validator uses the running product in a real browser and saves evidence. Everything is validated on a local build, so you need no cloud account; a deployed test environment is optional.
+* **QA department:** a test engineer writes the acceptance suite from the requirements (Playwright for UIs); a validator uses the running product in a real browser, then reads back what it stored (the database, your cloud account, GitHub) wherever it has read access, and saves evidence. Everything is validated on a local build, so you need no cloud account; a deployed test environment is optional.
+* **Works out how to test your project:** setup reads the code, the tests and the infrastructure and writes a test map: how each module is exercised, where its state lives and how to read that back. You are asked only about what it could not infer, before work starts. Ask it to check one module on its own (`/factory test the billing module`) and it does.
 * **Ships by pull request:** the factory pushes the branch, opens the PR, waits for CI, merges when you approve, then checks the deploy and closes the issues. Production changes a normal deploy doesn't make (a new table, a migration) follow a fixed routine: diff first, apply only the expected change, verify, and check after the deploy that the shipped code is really using it.
 * **Knows where the time went:** every task's build, review and queue time is recorded in beads; `koujou times` adds it up, with time spent waiting on you counted apart from work.
 * **You are asked once:** API keys, access and decisions are requested up front, in one batch, including when the work comes from your existing backlog. What you can't provide is built against a fake and listed under "Waiting on you". Permission counts too: "may the factory create this table, or will you?" is asked at the start, not when the branch is finished.
@@ -96,6 +97,7 @@ In your terminal:
 | `koujou doctor` | Check the installation and the current project. |
 | `koujou accept <task-id>` | Run a task's acceptance tests (or `--parent <epic-id>` for all of an epic's). |
 | `koujou times <epic-id>` | Time per task (build, review, queue), bounces, rebases and agents used. |
+| `koujou ready <epic-id>` | The tasks of a run that can start now. Like `bd ready`, but a task that has landed and stays open until you merge counts as done, so the next wave shows up. |
 | `koujou converge <epic-id>` | After a validation round: may the fix loop go on? Says continue, which bug is stuck, or stop, from the run's record. |
 | `koujou wait <epic-id> start\|end` | Mark when a run stops to wait for you and when it resumes, so `koujou times` reports waiting apart from work. |
 | `koujou update` | Pull the latest koujou and relink. |
@@ -105,7 +107,7 @@ In Claude Code:
 
 | Command | Action |
 | --- | --- |
-| `/factory-setup` | Onboard a project, existing or empty. Run once. |
+| `/factory-setup` | Onboard a project, existing or empty. Run once. It follows `factory-adopt` for a codebase and `factory-new` for an empty directory; you don't call those yourself. |
 | `/factory <request>` | Size the work and run the pipeline. |
 | `/factory-spec` | Raw request → testable requirements. |
 | `/factory-design` | Requirements → system design. |
@@ -183,7 +185,7 @@ The factory is tested like software. Before opening a pull request:
 tests/run.sh
 ```
 
-That runs the static checks and the CLI tests in a few seconds, with no model. If you changed a skill or a worker, open Claude Code in this repository and run the scenarios for it:
+That runs the static checks and the CLI tests in a few minutes, with no model. If you changed a skill or a worker, open Claude Code in this repository and run the scenarios for it:
 
 ```text
 /factory-test
@@ -199,7 +201,7 @@ A new rule comes with a scenario that fails without it. [`tests/README.md`](test
 
 ## 🧪 Status
 
-Koujou is new. It has delivered two epics and a six-issue backlog pass end to end in a lab project (through a pull request, CI and merge), and four backlog issues on a live Next.js product. Not yet exercised: a deploy performed by the factory, validation of a deployed environment, and the requirements and design stages on a large existing codebase. See [`lab/README.md`](lab/README.md) for exactly what has and has not been tested.
+Koujou is new. It has delivered two epics and a six-issue backlog pass end to end in a lab project (through a pull request, CI and merge), and two backlog passes on a live Next.js product: four issues, then six, the second through pull request, merge, a production deploy the factory watched, and a smoke check of the live site. Not yet exercised with real agents: validation of a deployed test environment, a task marked stuck, the requirements and design stages on real work, and a brand-new project (`/factory-setup` on an empty directory). See [`lab/README.md`](lab/README.md) for exactly what has and has not been tested.
 
 ## 📝 License
 

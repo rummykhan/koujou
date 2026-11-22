@@ -116,7 +116,7 @@ template = (ROOT / "skills/factory/reference/agents-template.md").read_text()
 if template.count("<!-- BEGIN SOFTWARE FACTORY") != 1 or template.count("<!-- END SOFTWARE FACTORY -->") != 1:
     fail("agents-template.md: must contain exactly one BEGIN and one END marker")
 profile = (ROOT / "skills/factory/reference/profile-template.md").read_text()
-for section in ("Commands", "Git policy", "Deploy policy", "QA", "Security review", "Limits", "Lessons"):
+for section in ("Commands", "Git policy", "Deploy policy", "Test map", "QA", "Security review", "Limits", "Lessons"):
     if f"## {section}" not in profile:
         fail(f"profile-template.md: section '## {section}' is missing (skills read it)")
 for limit in set(re.findall(r"`(max_[a-z_]+)`", "".join(p.read_text() for p in skills.values()))):

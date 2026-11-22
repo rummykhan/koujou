@@ -10,7 +10,7 @@ A new project has no gate, no conventions and no baseline, and the delivery loop
 ## Order of work
 
 1. **Capture the idea.** Run `factory-spec` first, at lane L. The product requirements decide the stack, so nothing technical is chosen yet.
-2. **Design.** Run `factory-design`. For a new project the design must also settle: language and framework, repo layout, how it is tested, how it runs locally, where it will deploy. Prefer boring, well-supported choices and whatever the user already runs elsewhere; ask them rather than assume.
+2. **Design.** Run `factory-design`. For a new project the design must also settle: language and framework, repo layout, how it is tested, how it runs locally, where it will deploy, and how each component will be tested and its state read back (the profile's Test map starts from this). Prefer boring, well-supported choices and whatever the user already runs elsewhere; ask them rather than assume.
 3. **Bootstrap the repo** (after the design is approved):
    - `git init` if needed, a `.gitignore`, a README stating what the project is.
    - `bd init --non-interactive --prefix <short>`; review the files it adds.

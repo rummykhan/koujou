@@ -43,7 +43,11 @@ def main(args):
         ran += 1
         secs = time.time() - t
         out = r.stdout + r.stderr
-        if r.returncode == 0 and (EMPTY.search(out) or i not in out):
+        # The id must come from a test's name. A worktree is usually named after its task, and runners print the
+        # directory they run in and sometimes the command itself, so neither may count as the mention.
+        names = out.replace(cmd, "")
+        mentioned = re.search(r"(?<![\w/.-])" + re.escape(i), names)   # not as a path segment
+        if r.returncode == 0 and (EMPTY.search(out) or not mentioned):
             # A filter that matches nothing "passes" in most runners, and that proves nothing. Tests are named
             # with the task id, so a run that never prints the id ran none of this task's tests.
             failed.append(i)

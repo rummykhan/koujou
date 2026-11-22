@@ -47,6 +47,7 @@ bd update <id> --claim                                # in_progress, assigned to
 bd show <id> --json                                   # full text + metadata
 bd update <id> --append-notes "<what happened>"       # mid-flight state
 bd update <id> --set-metadata fix_attempts=<n>        # loop counter (also: rebases; reopened on a bug whose fix failed validation)
+koujou ready <epic-id>                                # what can start now, where landed tasks stay open until the merge (bd ready shows nothing then)
 koujou converge <epic-id> --record                    # after each triage: records the round, says continue, stuck <bug> or stop
 bd update <id> --set-metadata accept='<command>'      # the task's acceptance tests; run with: koujou accept <id>
 bd close <id> --reason "<shipped> | evidence: <...> | residue: <...>"

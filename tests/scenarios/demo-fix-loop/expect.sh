@@ -28,6 +28,7 @@ import json, sys
 bugs = json.load(sys.stdin); ids = {b[\"id\"] for b in bugs}
 sys.exit(0 if any(d.get(\"dependency_type\") == \"blocks\" and d[\"id\"] in ids for b in bugs for d in b.get(\"dependencies\") or []) else 1)'"
 check "every bug is closed, and so is every task" bash -c "bd list --parent $epic --all --limit 0 --json --readonly | python3 -c 'import json,sys; sys.exit(any(i[\"status\"]!=\"closed\" for i in json.load(sys.stdin)))'"
+check "bd lint is clean: every bug filed in triage, deferred ones too, has its Steps to Reproduce" bd lint
 check "nothing is stuck" test "$(bd list --label factory:stuck --all --limit 0 --json --readonly | python3 -c 'import json,sys; print(len(json.load(sys.stdin)))')" = 0
 check "each round was recorded, bugs open fell to zero, and it took at least two rounds" bash -c "bd show $epic --json --readonly | python3 -c '
 import json, sys

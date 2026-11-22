@@ -92,3 +92,21 @@ Six linklab backlog issues as a pass, with the dependencies between overlapping 
 - `factory-spec`, `factory-design` and `factory-new` on real work.
 - A deploy performed by the factory, and validation of a deployed environment.
 - Acceptance commands from the plan stage onward (here they were added part-way; three of six tasks have none).
+
+## Run 5: setup on a second real project (2026-11-21)
+
+`factory-setup` on a live product of a different shape from the first: a workspace repository holding the tracking (beads, roadmap, specs, decision log) with the product checked out inside it as its own repository; six apps over DynamoDB; no tests, no CI, no staging, and local runs that read the production tables. Setup only: the profile, the Test map and the system design. No work has been delivered there yet.
+
+| Stage | Exercised | Outcome |
+|---|---|---|
+| Discovery | Two repositories, existing roadmap, specs, decision log and pitfalls | Mapped in the profile's Docs map; the design stage will write the project's own spec |
+| Baseline gate | Build and typecheck twice in the main checkout | Green both times |
+| Worktree recipe | Throwaway worktree: install, build, typecheck, two app builds | Green, after one false alarm: the app builds failed in a network-sandboxed shell and passed with network access |
+| Test map | Inferred from the code and infrastructure; read access tried once (AWS identity, table list, GitHub) | Ten rows; five marked interface only because their only target is production |
+| Hand-over | Open questions | Five, among them where write paths may be tested |
+
+### Still not exercised with real agents
+
+- `factory-spec` and `factory-design` on real work (the next step on this project), and `factory-new` on an empty directory.
+- A task marked stuck; validation of a deployed test environment.
+- The validator's cross-check against a real database or cloud account (the scenarios use a file).

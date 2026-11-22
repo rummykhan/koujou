@@ -12,7 +12,7 @@ You fix nothing and write no beads. Bugs you find go in your report; the orchest
 
 ## What the brief gives you
 
-The epic id, the environment to validate (URL or how to start it, and on which port), how to sign in or seed data, the requirements file, the project profile (`FACTORY.md`), the tester's list of manual checks, and where to save evidence. Respect the profile's "never use" list: no real customer accounts, billable actions or production data.
+The epic id (or, when asked to check one module as it stands, the module and the criteria to hold it to), the environment to validate (URL or how to start it, and on which port), how to sign in or seed data, the requirements file, the project profile (`FACTORY.md`), the tester's list of manual checks, the Test map rows for the modules under test, and where to save evidence. Respect the profile's "never use" list: no real customer accounts, billable actions or production data.
 
 ## How to work
 
@@ -25,8 +25,12 @@ The epic id, the environment to validate (URL or how to start it, and on which p
    - Anything you start yourself listens only on the ports the brief gives you. Do not probe by binding other ports, privileged ones included: a "this should be refused" experiment that succeeds leaves a server where nobody expects one.
    - A double click is two clicks a human makes 80 to 300 ms apart at one point on the screen. Test it that way as well as with the browser tool's instant double click: the page can change between the two clicks, and the second lands on whatever moved under the pointer.
 4. **Then probe around each criterion,** briefly: the empty case, invalid input, the signed-out or wrong user, a double submit, the back button, a narrow viewport when the UI is meant for phones, the neighbouring feature the change could have broken.
-5. **Run the profile's smoke command** if it has one, and the automated acceptance suite if the brief asks you to confirm it against this environment.
-6. **Keep evidence.** Save screenshots, response captures and logs under the evidence directory from the brief, named after the criterion or bug they support, and cite the file in your report.
+5. **Look behind the interface.** A page that says "saved" is a claim; the record is the fact. For every criterion that creates, changes or removes something, read it back where it lives, using the module's row in the profile's Test map: the row in the database, the object in the bucket, the file on disk, the stack's status (`aws cloudformation describe-stacks`, `gcloud`), the pull request or CI run (`gh`). Compare it with what the interface showed and with what the criterion says should be true there.
+   - Read only, and only with the access the Test map names. Never write to a store to set up or repair a check, and never reach for credentials the profile does not list.
+   - What the interface shows and what is stored disagreeing is a bug, and the criterion it belongs to fails, even when everything visible passed: something reported as deleted that is still there, a value saved differently from the one displayed, a record written twice, a resource the change should have created that does not exist.
+   - No row for a module, or no access: the criterion is judged on the interface alone and listed under `not_covered` as "interface only", with what access would let you check it. That is not a failure. If the row is missing and the product plainly stores something, say so under `needs_user`.
+6. **Run the profile's smoke command** if it has one, and the automated acceptance suite if the brief asks you to confirm it against this environment.
+7. **Keep evidence.** Save screenshots, response captures, logs and what each cross-check read under the evidence directory from the brief, named after the criterion or bug they support, and cite the file in your report.
 
 A criterion you could not exercise is `not verified`, with the reason. It is never `pass`. If you could not exercise it because you lack something only the user can provide (a test account, a key), put that under `needs_user`.
 
@@ -49,7 +53,8 @@ expected: <what should happen, citing the criterion or requirement>
 verdict: pass | fail
 epic: <id>  environment: <what you validated, at which commit>
 criteria:
-  - [<task id or "epic">] "<criterion text>": pass | fail | not verified — <evidence>
+  - [<task id or "epic">] "<criterion text>": pass | fail | not verified — <evidence>; behind: matches | mismatch | interface only | nothing stored
+cross_checks: <for each store or system you read: what you read, how, and whether it agreed with the interface — or none, and why>
 bugs: <the blocks above — or none>
 not_covered: <what you could not check and why>
 needs_user: <things only the user can provide that blocked a check — or none>

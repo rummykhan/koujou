@@ -4,6 +4,9 @@ Variants are the same feature built well or built with one planted defect, so a 
 
   done-good      PATCH /todos/<id> {done} implemented correctly, tests named with the task id
   done-weak      same feature, but `done` is always set to true, the new test only covers true, and an existing test was loosened
+  done-hollow    the feature is correct, and every criterion has a test named with the task id, but two of the tests
+                 assert nothing that matters: they pass with `done` always true and with no validation at all.
+                 Nothing is wrong with the product; the acceptance tests would not notice if something were
   export-hole    GET /export?name=<file> reads any file the process can read (path traversal)
   list-filter    GET /todos?done=true|false filter (a second, harmless change touching the same route as done-*)
   store-list-bug    a defect in the store, applied with done-good: the list leaves the title off todos that are done
@@ -13,6 +16,9 @@ Variants are the same feature built well or built with one planted defect, so a 
   search-index      store.search(text) backed by an index that holds the todo objects
   setdone-replace   planted, over done-good: setDone stores a new object, leaving the search index stale
   search-route      GET /todos?q=<text> served from store.search
+  delete-stored-good  todos are kept in data/todos.json; DELETE /todos/<id> removes the record from the file
+  delete-stored-soft  planted: DELETE answers the same and the API never shows the todo again, but the record stays in
+                      the file marked deleted. Only reading the file shows it
 usage: make.py <variant> <task-id>
 """
 import re
@@ -34,8 +40,8 @@ STORE_GET = """    get(id) {
 """
 NOT_FOUND = "  send(res, 404, { error: 'not_found' });\n}\n"
 
-if variant in ("done-good", "done-weak"):
-    setter = "todo.done = done;" if variant == "done-good" else "todo.done = true;"
+if variant in ("done-good", "done-weak", "done-hollow"):
+    setter = "todo.done = true;" if variant == "done-weak" else "todo.done = done;"
     sub("src/store.js", STORE_GET, STORE_GET + f"""    setDone(id, done) {{
       const todo = todos.get(id);
       if (!todo) return undefined;
@@ -44,7 +50,7 @@ if variant in ("done-good", "done-weak"):
     }},
 """)
     check = ("    if (!body || typeof body.done !== 'boolean') return send(res, 400, { error: 'invalid_done' });\n"
-             if variant == "done-good" else
+             if variant != "done-weak" else
              "    if (!body) return send(res, 400, { error: 'invalid_done' });\n")
     sub("src/server.js", NOT_FOUND, f"""  const item = /^\\/todos\\/([1-9][0-9]*)$/.exec(pathname);
   if (item) {{
@@ -103,6 +109,40 @@ test('{tid}: PATCH rejects a body without a boolean done, and an unknown id', as
     }}
     assert.equal((await patch(app.url, 99, '{{"done":true}}')).status, 404);
     assert.equal((await fetch(`${{app.url}}/todos/1`)).status, 405);
+  }} finally {{
+    await app.close();
+  }}
+}});
+"""
+    elif variant == "done-hollow":
+        # the plant: tests that carry the id and name the criteria, and would stay green over a broken product
+        tests += f"""
+test('{tid}: PATCH /todos/<id> can mark a done todo not done again', async () => {{
+  const app = await start();
+  try {{
+    await add(app.url, 'a');
+    await patch(app.url, 1, '{{"done":true}}');
+    const res = await patch(app.url, 1, '{{"done":false}}');
+    assert.equal(res.status, 200);
+    const todo = await res.json();
+    assert.equal(typeof todo.done, 'boolean');
+    const listed = await (await fetch(`${{app.url}}/todos`)).json();
+    assert.equal(listed.todos.length, 1);
+  }} finally {{
+    await app.close();
+  }}
+}});
+
+test('{tid}: PATCH rejects a body without a boolean done, and an unknown id', async () => {{
+  const app = await start();
+  try {{
+    await add(app.url, 'a');
+    for (const body of ['{{}}', '{{"done":"yes"}}', 'not json']) {{
+      const res = await patch(app.url, 1, body);
+      assert.ok(res.status < 500, body);
+    }}
+    assert.ok((await patch(app.url, 99, '{{"done":true}}')).status >= 400);
+    assert.notEqual((await fetch(`${{app.url}}/todos/1`)).status, 200);
   }} finally {{
     await app.close();
   }}
@@ -256,6 +296,100 @@ test('{tid}: GET /todos?q= lists only the todos whose title contains the text', 
 elif variant == "store-list-bug":
     sub("src/store.js", "return [...todos.values()].map((todo) => ({ ...todo }));",
         "return [...todos.values()].map((todo) => (todo.done ? { id: todo.id, done: true } : { ...todo }));")
+
+elif variant in ("delete-stored-good", "delete-stored-soft"):
+    soft = variant == "delete-stored-soft"
+    open("src/store.js", "w").write("""import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import path from 'node:path';
+
+// Todo store. Ids are positive integers, assigned in order and never reused.
+// With a file, every change is written to it and the todos are read back from it at start.
+export function createStore({ file } = {}) {
+  const todos = new Map();
+  let nextId = 1;
+  if (file && existsSync(file)) {
+    const saved = JSON.parse(readFileSync(file, 'utf8'));
+    nextId = saved.nextId;
+    for (const todo of saved.todos) todos.set(todo.id, todo);
+  }
+  const save = () => {
+    if (!file) return;
+    mkdirSync(path.dirname(file), { recursive: true });
+    writeFileSync(file, JSON.stringify({ nextId, todos: [...todos.values()] }, null, 2));
+  };
+  const live = () => [...todos.values()]""" + (".filter((todo) => !todo.deleted)" if soft else "") + """;
+  const view = (todo) => ({ id: todo.id, title: todo.title, done: todo.done });
+  return {
+    add(title) {
+      const todo = { id: nextId++, title, done: false };
+      todos.set(todo.id, todo);
+      save();
+      return view(todo);
+    },
+    list() {
+      return live().map(view);
+    },
+    get(id) {
+      const todo = live().find((item) => item.id === id);
+      return todo ? view(todo) : undefined;
+    },
+    remove(id) {
+      const todo = live().find((item) => item.id === id);
+      if (!todo) return false;
+      """ + ("todo.deleted = true;" if soft else "todos.delete(id);") + """
+      save();
+      return true;
+    },
+  };
+}
+""")
+    sub("src/server.js", NOT_FOUND, """  const item = /^\\/todos\\/([1-9][0-9]*)$/.exec(pathname);
+  if (item) {
+    if (req.method !== 'DELETE') return send(res, 405, { error: 'method_not_allowed' });
+    if (!store.remove(Number(item[1]))) return send(res, 404, { error: 'not_found' });
+    res.writeHead(204);
+    return res.end();
+  }
+
+""" + NOT_FOUND)
+    sub("src/main.js", "import { createServer } from './server.js';", "import { createServer } from './server.js';\nimport { createStore } from './store.js';")
+    sub("src/main.js", "createServer().listen(", "const file = process.env.TODO_DATA ?? 'data/todos.json';\ncreateServer({ store: createStore({ file }) }).listen(")
+    open(".gitignore", "a").write("data/\n")
+    open("test/delete.test.js", "w").write(f"""import test from 'node:test';
+import assert from 'node:assert/strict';
+import {{ mkdtempSync }} from 'node:fs';
+import {{ tmpdir }} from 'node:os';
+import path from 'node:path';
+import {{ start }} from './helpers.js';
+import {{ createStore }} from '../src/store.js';
+
+const add = (url, title) => fetch(`${{url}}/todos`, {{ method: 'POST', body: JSON.stringify({{ title }}) }});
+
+test('{tid}: DELETE /todos/<id> removes the todo and leaves the others and their ids alone', async () => {{
+  const app = await start();
+  try {{
+    for (const title of ['a', 'b', 'c']) await add(app.url, title);
+    assert.equal((await fetch(`${{app.url}}/todos/2`, {{ method: 'DELETE' }})).status, 204);
+    const listed = await (await fetch(`${{app.url}}/todos`)).json();
+    assert.deepEqual(listed.todos.map((todo) => todo.id), [1, 3]);
+    assert.equal((await fetch(`${{app.url}}/todos/2`, {{ method: 'DELETE' }})).status, 404);
+    assert.equal((await (await add(app.url, 'd')).json()).id, 4);
+  }} finally {{
+    await app.close();
+  }}
+}});
+
+test('{tid}: todos are read back from the file by a new store, and a deleted one does not return', () => {{
+  const file = path.join(mkdtempSync(path.join(tmpdir(), 'todo-')), 'todos.json');
+  const first = createStore({{ file }});
+  first.add('a');
+  first.add('b');
+  first.remove(1);
+  const second = createStore({{ file }});
+  assert.deepEqual(second.list(), [{{ id: 2, title: 'b', done: false }}]);
+  assert.equal(second.add('c').id, 3);
+}});
+""")
 
 else:
     sys.exit(f"unknown variant {variant}")

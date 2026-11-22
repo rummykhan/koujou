@@ -67,7 +67,10 @@ def main(args):
         sys.exit("no epic or run record (a task labelled factory:run) to hold the round history")
 
     bugs = {i: d for i, d in issues.items() if d.get("issue_type") == "bug" and not SKIP & set(d.get("labels") or [])}
-    live = {i: d for i, d in bugs.items() if d.get("status") != "closed"}
+    # A bug that is built, reviewed and landed but left open until the user merges (factory:awaiting-merge) is done
+    # as far as the loop is concerned: counting it made a finished run report "2 open fix-now bugs".
+    live = {i: d for i, d in bugs.items()
+            if d.get("status") != "closed" and "factory:awaiting-merge" not in (d.get("labels") or [])}
 
     def depth(i, seen=()):
         # how many open bugs sit under this one: a bug whose fix is waiting on another bug's fix, and so on down

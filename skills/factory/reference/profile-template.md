@@ -5,7 +5,7 @@
 
 ## Project
 
-<One paragraph: what the product is, who uses it, the stack, where the code lives if not the repo root.>
+<One paragraph: what the product is, who uses it, the stack, where the code lives if not the repo root. If the tracking and the code are separate repositories, say which is which, and which one the commands, branches and worktrees below belong to.>
 
 ## Commands
 
@@ -42,7 +42,7 @@ Known gaps in the gate: <areas with no tests, flaky tests, things only checkable
 
 - Environments: <local, staging, prod — with URLs>
 - Who triggers each: <e.g. "local: factory. prod: user only, by merging the PR">
-- Validation target for the delivery loop: local <how: production build on a free port, with local services>. This is the default for every project: it needs no cloud account and cannot hurt anyone.
+- Validation target for the delivery loop: local <how: production build on a free port, with local services; and what that local run reads and writes: a local database, or production read-only>. This is the default for every project: it needs no cloud account and cannot hurt anyone.
 - Deployed validation (optional, run by `factory-ship` after the merge): <none | URL of a test environment, the test accounts to use, and whether the acceptance suite can point at it (e.g. `BASE_URL=... npx playwright test`)>. Against production: smoke and read-only checks only, unless stated otherwise here.
 - Production changes the deploy does not make (infrastructure, migrations, secrets): <how they are made (the command, from where) and who may: "user only", or "the factory, after showing the diff, one stack at a time". A one-off yes from the user does not change this line; only the user does.>
 - Rollback: <the procedure, or "none exists" — say so plainly, the orchestrator treats deploys with no rollback as needing the user every time>
@@ -52,6 +52,16 @@ Known gaps in the gate: <areas with no tests, flaky tests, things only checkable
 
 How to exercise the product as a user: <URL, how to sign in with a test account, seed data, CLI entry points, Playwright availability>.
 Never use: <real customer accounts, billable actions, production data>.
+
+## Test map
+
+How each part of the product is tested, and where to look behind it. `factory-setup` fills this from the code, the tests, CI, the infrastructure definitions and the access this machine already has. A row it had to guess goes under Open questions and is asked once; a stage that touches a module with no row adds one, or asks before it starts.
+
+| Module | Exercise it through | Its state lives in | Cross-check, read-only | Access |
+|---|---|---|---|---|
+| `<name, and its paths>` | `<web UI at /…, API route, CLI command, queue or job>` | `<table, bucket, file, third-party account; "none" if it keeps nothing>` | `<the command or query that reads it back, locally and where deployed>` | `<local: yes. deployed: profile or account name, read-only \| none: interface only>` |
+
+Beyond the product's own modules, give a row to what a change can break outside the code: infrastructure (`<aws cloudformation describe-stacks …, gcloud …, terraform plan>`) and the delivery path (`<gh run list, gh pr checks>`). Cross-checks only read. Anything that writes, bills or touches production data is listed under Validation's "Never use".
 
 ## QA
 
@@ -105,7 +115,7 @@ Never use: <real customer accounts, billable actions, production data>.
 
 ## Open questions
 
-<What adoption could not determine and the user needs to confirm: inferred push and merge policy, who reviews, anything guessed. Empty once the profile is approved.>
+<What adoption could not determine and the user needs to confirm: inferred push and merge policy, who reviews, Test map rows that were guessed or have no way to read their state, anything guessed. Empty once the profile is approved.>
 
 ## Project rules
 
