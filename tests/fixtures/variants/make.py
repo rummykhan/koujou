@@ -19,6 +19,9 @@ Variants are the same feature built well or built with one planted defect, so a 
   delete-stored-good  todos are kept in data/todos.json; DELETE /todos/<id> removes the record from the file
   delete-stored-soft  planted: DELETE answers the same and the API never shows the todo again, but the record stays in
                       the file marked deleted. Only reading the file shows it
+  page-good      over done-good: GET / serves a page that lists the todos, adds one, and marks one done with a tick box
+  page-forgets   planted, over done-good: the tick box draws the todo as done at once, but what it sends is refused
+                 by the API and the answer is never read. The page shows done; a reload, or GET /todos, shows it is not
 usage: make.py <variant> <task-id>
 """
 import re
@@ -388,6 +391,80 @@ test('{tid}: todos are read back from the file by a new store, and a deleted one
   const second = createStore({{ file }});
   assert.deepEqual(second.list(), [{{ id: 2, title: 'b', done: false }}]);
   assert.equal(second.add('c').id, 3);
+}});
+""")
+
+elif variant in ("page-good", "page-forgets"):
+    forgets = variant == "page-forgets"
+    on_tick = ("""      box.addEventListener('change', () => {
+        li.className = box.checked ? 'done' : '';
+        fetch('/todos/' + todo.id, { method: 'PATCH', headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ done: String(box.checked) }) });
+      });""" if forgets else """      box.addEventListener('change', async () => {
+        const res = await fetch('/todos/' + todo.id, { method: 'PATCH', headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ done: box.checked }) });
+        if (!res.ok) say('That todo could not be changed.');
+        await load();
+      });""")
+    page = """<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Todos</title>
+<style>body{font:16px system-ui;max-width:32rem;margin:2rem auto;padding:0 1rem} li.done span{text-decoration:line-through;color:#666} ul{list-style:none;padding:0}</style>
+</head>
+<body>
+<h1>Todos</h1>
+<form id="add"><label>New todo <input id="title" autocomplete="off"></label> <button type="submit">Add</button></form>
+<p id="msg" role="status"></p>
+<ul id="list" aria-label="Todos"></ul>
+<script>
+  const list = document.getElementById('list'), msg = document.getElementById('msg'), title = document.getElementById('title');
+  const say = (text) => { msg.textContent = text; };
+  async function load() {
+    const { todos } = await (await fetch('/todos')).json();
+    list.replaceChildren(...todos.map((todo) => {
+      const li = document.createElement('li'), label = document.createElement('label'), box = document.createElement('input'), span = document.createElement('span');
+      box.type = 'checkbox'; box.checked = todo.done; span.textContent = ' ' + todo.title;
+      li.className = todo.done ? 'done' : '';
+""" + on_tick + """
+      label.append(box, span); li.append(label);
+      return li;
+    }));
+  }
+  document.getElementById('add').addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const res = await fetch('/todos', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ title: title.value }) });
+    if (res.ok) { title.value = ''; say(''); } else say('Enter a title of 1 to 200 characters.');
+    await load();
+  });
+  load();
+</script>
+</body>
+</html>
+"""
+    sub("src/server.js", "const MAX_BODY_BYTES", "const PAGE = " + repr(page).replace("\\n", "\\n") + ";\n\nconst MAX_BODY_BYTES")
+    sub("src/server.js", NOT_FOUND, """  if (pathname === '/') {
+    if (req.method !== 'GET') return send(res, 405, { error: 'method_not_allowed' });
+    res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
+    return res.end(PAGE);
+  }
+
+""" + NOT_FOUND)
+    open("test/page.test.js", "w").write(f"""import test from 'node:test';
+import assert from 'node:assert/strict';
+import {{ start }} from './helpers.js';
+
+test('{tid}: GET / serves the page', async () => {{
+  const app = await start();
+  try {{
+    const res = await fetch(app.url + '/');
+    assert.equal(res.status, 200);
+    assert.match(res.headers.get('content-type'), /text\\/html/);
+    const html = await res.text();
+    assert.match(html, /<h1>Todos<\\/h1>/);
+    assert.match(html, /New todo/);
+  }} finally {{
+    await app.close();
+  }}
 }});
 """)
 

@@ -51,11 +51,12 @@ bd update <task> --claim --set-metadata claimed_at=$(now)   # when this run take
 bd update <task> --set-metadata built_at=$(now)        # the builder reported done (overwrite on a retry)
 bd update <task> --set-metadata reviewed_at=$(now)     # the review passed
 bd update <task> --set-metadata merged_at=$(now)       # it landed on the epic branch
-bd update <task> --set-metadata agent_runs=<n>         # every agent spawned for it so far: builders, reviewers, re-runs
+koujou spawned <task>                                  # each time you spawn an agent for it: builder, reviewer, re-run, per-task security read
+koujou spawned <epic>                                  # each agent no single task owns: scouts, the security lenses, re-checks, the validator
 bd update <epic> --set-metadata validated_at=$(now)    # the last validation passed
 ```
 
-`koujou times <epic-id>` (or `koujou times --label factory:pass-<n>`) prints the result per task and in total. Put its output in the report.
+Count with `koujou spawned`, never by setting the number: on the second real project the count was kept by hand and was wrong by a third, because the epic-level agents were never written anywhere, and the budget in `koujou converge` reads the same numbers. `koujou times <epic-id>` (or `koujou times --label factory:pass-<n>`) prints the result per task and in total. Put its output in the report.
 
 ## 1. Build waves
 
@@ -76,7 +77,7 @@ git worktree add <worktree-root>/<task> -b factory-task/<task> factory/<epic>
 
 The epic's QA task (label `qa`) is part of the first wave: it goes to a `factory-tester`, not a builder, with the requirements file and the profile's QA section in its brief. Its branch is reviewed and merged like any other. The suite describes the finished epic, so it stays red on the epic branch until the tasks it covers, usually ending with the wiring task, are merged: run the unit gate after each merge, and the full gate including the suite once they are all in. A suite test that still fails then is a bug to triage (step 4) before validation even starts. Where the project runs every test with one command, so the suite cannot be kept out of the gate, hold the QA branch in the merge queue after its review passes and land it last, after the tasks it covers: landed earlier, it turns the epic gate red for every branch behind it.
 
-**c. Spawn the builders, all in one message** so they run in parallel. Each brief contains: the task id; the absolute worktree path and branch, with an instruction to work only there whatever directory its environment reports; the path to `FACTORY.md`; the path to the swarm protocol; one line per sibling in this wave (id, title, lane) so the builder knows who is nearby; a distinct port or database suffix if the project runs local services; a scratch folder of its own for throwaway scripts (workers share the machine's temp space, and one worker's `seed.ts` has overwritten another's); and on a retry, the reviewer's findings verbatim. Do not paste the task text; the builder reads it from beads. Count the spawn in the task's `agent_runs`.
+**c. Spawn the builders, all in one message** so they run in parallel. Each brief contains: the task id; the absolute worktree path and branch, with an instruction to work only there whatever directory its environment reports; the path to `FACTORY.md`; the path to the swarm protocol; one line per sibling in this wave (id, title, lane) so the builder knows who is nearby; a distinct port or database suffix if the project runs local services; a scratch folder of its own for throwaway scripts (workers share the machine's temp space, and one worker's `seed.ts` has overwritten another's); and on a retry, the reviewer's findings verbatim. Do not paste the task text; the builder reads it from beads. Count the spawn: `koujou spawned <task>`.
 
 **d. As each builder reports**, read the mailboxes of the tasks in flight (`bd comments <id>`) and act on anything addressed to you: relay an urgent message to a running builder, settle a contract question, or add a dependency.
 
@@ -119,7 +120,7 @@ When the tracker is shared with people and the work only becomes real for them o
 
 ### A worker that has gone quiet
 
-A worker normally reports within a few minutes of its siblings. When one has said nothing for three times as long as the slowest task so far, look before waiting longer: is any process of its alive (`ps`), when did its worktree or its transcript last change? On the first epic of the second real project a builder sat for 45 minutes on one long shell script it had written to perturb the code eleven ways; nothing was running, and the orchestrator only noticed when every other task had landed. Stop it, and give a fresh worker the same worktree with what the first one left (an uncommitted file is usually sound work): tell it what stalled, and to run short commands, one at a time. Count the replacement in `agent_runs`; it is not a fix attempt.
+A worker normally reports within a few minutes of its siblings. `koujou ready <epic>` lists what is in flight and for how long, and marks `QUIET` anything building for more than three times the slowest build so far (and at least ten minutes); run it at every landing, which is when you would otherwise not look. When it flags one, look before waiting longer: is any process of its alive (`ps`), when did its worktree or its transcript last change? On the first epic of the second real project a builder sat for 45 minutes on one long shell script it had written to perturb the code eleven ways; nothing was running, and the orchestrator only noticed when every other task had landed. Stop it, and give a fresh worker the same worktree with what the first one left (an uncommitted file is usually sound work): tell it what stalled, and to run short commands, one at a time. Count the replacement in `agent_runs`; it is not a fix attempt.
 
 ### Stuck
 

@@ -79,6 +79,12 @@ check "landed and awaiting merge counts as done: its dependent is ready" bash -c
 check "…where bd ready alone still shows nothing" bash -c '! bd ready --parent "$1" --exclude-type epic --json | grep -q "$2"' _ $repic $rb
 check "the task two steps behind still waits, and says on what" bash -c '"$0" ready "$1" 2>&1 | grep -q "$2 waits on $3"' "$K" $repic $rc $rb
 check "a deferred task is never offered" bash -c '! "$0" ready "$1" 2>/dev/null | grep -q "^$2 "' "$K" $repic $rd
+old() { python3 -c "from datetime import datetime, timedelta, timezone; import sys; print((datetime.now(timezone.utc)-timedelta(seconds=int(sys.argv[1]))).strftime('%Y-%m-%dT%H:%M:%SZ'))" "$1"; }
+bd update $ra --set-metadata claimed_at=$(old 4000) --set-metadata built_at=$(old 3880) >/dev/null   # a 2 minute build, long ago
+bd update $rb --claim --set-metadata claimed_at=$(old 120) >/dev/null
+check "a task building for two minutes is in flight and not flagged" bash -c '"$0" ready "$1" 2>&1 | grep "$2 building" | grep -vq QUIET' "$K" $repic $rb
+bd update $rb --set-metadata claimed_at=$(old 2700) >/dev/null
+check "a task building far longer than any build so far is flagged quiet" bash -c '"$0" ready "$1" 2>&1 | grep "$2 building for 45m" | grep -q "QUIET"' "$K" $repic $rb
 bd close $rb --reason done --force >/dev/null 2>&1
 check "a closed dependency frees its dependent too" bash -c '"$0" ready "$1" 2>/dev/null | grep -q "^$2 "' "$K" $repic $rc
 
@@ -97,6 +103,10 @@ check "times shows build, review and queue durations" bash -c 'echo "$0" | grep 
 bd update $t1 --set-metadata claimed_at=$(plus 60) >/dev/null
 check "times prefers the run's own claim stamp over an older claim" bash -c '"$0" times "$1" | grep -Eq "30s +1m00s +10s +1m40s"' "$TESTS_DIR/../bin/koujou" $epic
 check "times totals the agents" bash -c 'echo "$0" | grep -q "agents spawned: 3"' "$out"
+check "spawned adds one to a task's count" bash -c '"$0" spawned "$1" | grep -q "$1: 4 agent runs"' "$TESTS_DIR/../bin/koujou" $t1
+koujou spawned $epic >/dev/null; koujou spawned $epic >/dev/null
+check "spawned on the epic counts agents no task owns, and times adds them" bash -c '"$0" times "$1" | grep -q "agents spawned: 6 (4 on tasks, 2 for the run"' "$TESTS_DIR/../bin/koujou" $epic
+check "spawned on an unknown id is an error" bash -c '! "$0" spawned td-nope 2>/dev/null' "$TESTS_DIR/../bin/koujou"
 koujou wait $epic start >/dev/null
 check "wait start stamps waiting_since" bash -c 'bd show "$0" --json | grep -q waiting_since' $epic
 check "a second start keeps the first stamp" bash -c '"$0" wait "$1" start | grep -q "already waiting"' "$TESTS_DIR/../bin/koujou" $epic
@@ -137,7 +147,7 @@ check "a chain four deep marks its top stuck" bash -c '"$0" converge "$1" | grep
 bd close $c3 --reason fixed >/dev/null
 check "…and it is unstuck when the bottom closes" bash -c '! "$0" converge "$1" | grep -q "^stuck"' "$K" $epic
 printf -- '- `max_agent_runs`: 2\n' >> FACTORY.md
-check "over the agent budget stops the loop" bash -c '! "$0" converge "$1" >/dev/null && "$0" converge "$1" | grep -q "stop: budget: 3 agent runs so far, limit 2"' "$K" $epic
+check "over the agent budget stops the loop" bash -c '! "$0" converge "$1" >/dev/null && "$0" converge "$1" | grep -q "stop: budget: 6 agent runs so far, limit 2"' "$K" $epic
 check "converge on an unknown id is an error" bash -c '! "$0" converge td-nope' "$K"
 
 finish

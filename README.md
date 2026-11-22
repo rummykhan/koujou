@@ -97,7 +97,8 @@ In your terminal:
 | `koujou doctor` | Check the installation and the current project. |
 | `koujou accept <task-id>` | Run a task's acceptance tests (or `--parent <epic-id>` for all of an epic's). |
 | `koujou times <epic-id>` | Time per task (build, review, queue), bounces, rebases and agents used. |
-| `koujou ready <epic-id>` | The tasks of a run that can start now. Like `bd ready`, but a task that has landed and stays open until you merge counts as done, so the next wave shows up. |
+| `koujou ready <epic-id>` | The tasks of a run that can start now. Like `bd ready`, but a task that has landed and stays open until you merge counts as done, so the next wave shows up. Also lists what is in flight and for how long, and flags a worker that has been quiet far longer than any build so far. |
+| `koujou spawned <id>...` | Count one agent run against a task, or against the epic for agents no single task owns (security lenses, the validator), so `koujou times` and the run's budget see every agent. |
 | `koujou converge <epic-id>` | After a validation round: may the fix loop go on? Says continue, which bug is stuck, or stop, from the run's record. |
 | `koujou wait <epic-id> start\|end` | Mark when a run stops to wait for you and when it resumes, so `koujou times` reports waiting apart from work. |
 | `koujou update` | Pull the latest koujou and relink. |

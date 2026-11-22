@@ -6,6 +6,7 @@ progress, so in a project that closes issues on merge it shows nothing after the
 import json
 import subprocess
 import sys
+from datetime import datetime, timezone
 
 DONE = "factory:awaiting-merge"
 HELD = {"factory:stuck", "factory:needs-user", "factory:deferred", "factory:run"}
@@ -45,6 +46,33 @@ def main(args):
                  and d.get("issue_type") != "epic" and "factory:run" not in (d.get("labels") or [])]
     print(f"\n  {len(ready)} ready, {len(in_flight)} in flight, {len(waiting)} waiting"
           + ("".join(f"\n  {i} waits on {', '.join(b)}" for i, _, b in waiting)), file=sys.stderr)
+
+    # A worker gone quiet: in flight for more than three times the slowest build this run has seen (and at least
+    # ten minutes). The orchestrator is told to look; nothing is stopped here.
+    def ts(v):
+        try:
+            return datetime.fromisoformat(str(v).replace("Z", "+00:00"))
+        except (TypeError, ValueError):
+            return None
+
+    def meta(d, k):
+        return ts((d.get("metadata") or {}).get(k))
+
+    builds = [(meta(d, "built_at") - (meta(d, "claimed_at") or ts(d.get("started_at")))).total_seconds()
+              for d in issues.values() if meta(d, "built_at") and (meta(d, "claimed_at") or ts(d.get("started_at")))]
+    limit = max(600, 3 * max(builds)) if builds else None
+    now = datetime.now(timezone.utc)
+    for i in in_flight:
+        d = issues[i]
+        since = meta(d, "built_at") or meta(d, "claimed_at") or ts(d.get("started_at"))
+        if not since:
+            continue
+        age = (now - since).total_seconds()
+        stage = "in review or the queue" if meta(d, "built_at") else "building"
+        quiet = limit is not None and age > limit
+        print(f"  {i} {stage} for {int(age // 60)}m"
+              + (f"  QUIET: over three times the slowest build so far ({int(max(builds) // 60)}m). Is its agent alive?"
+                 if quiet else ""), file=sys.stderr)
 
 
 if __name__ == "__main__":

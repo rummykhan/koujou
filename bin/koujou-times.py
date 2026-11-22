@@ -49,7 +49,7 @@ def main(args):
         ids = [i["id"] for i in bd("list", "--parent", args[0], "--all", "--limit", "0")]
         title = f"{epic['id']} — {epic['title']}"
 
-    rows, firsts, lasts, runs_total = [], [], [], 0
+    rows, firsts, lasts, runs_total, run_level = [], [], [], 0, 0
     for d in (bd("show", *ids) if ids else []):  # one call for all of them
         if d.get("issue_type") == "epic":
             continue
@@ -110,14 +110,18 @@ def main(args):
         if ts(epic.get("closed_at")):
             print(f"  start to closed: {fmt(dur(s, ts(epic.get('closed_at'))))}")
         try:
-            runs_total += int(m.get("agent_runs"))  # agents not tied to one task: scouts, security lenses, validators
+            run_level = int(m.get("agent_runs"))  # agents not tied to one task: scouts, security lenses, validators
         except (TypeError, ValueError):
-            pass
+            run_level = 0
         if "validate_rounds" in m:
             print(f"  validation rounds: {m['validate_rounds']}"
                   + (f" (open fix-now bugs after each: {str(m['round_open']).replace(',', ', ')})" if m.get("round_open") else ""))
-    if runs_total:
-        print(f"  agents spawned: {runs_total}")
+    if runs_total or run_level:
+        print(f"  agents spawned: {runs_total + run_level}"
+              + (f" ({runs_total} on tasks, {run_level} for the run: scouts, security lenses, validators)" if run_level
+                 else (" (tasks only; none counted for the run itself: security lenses and validators go on the epic,"
+                       " `koujou spawned <epic>`)" if epic and ((epic.get("metadata") or {}).get("security_at")
+                                                               or (epic.get("metadata") or {}).get("validated_at")) else "")))
     print("  build = claim to builder done (incl. retries) · review = to review pass · "
           "queue = to landing on the epic branch · '-' = not recorded")
 

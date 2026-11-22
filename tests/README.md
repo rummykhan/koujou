@@ -19,8 +19,8 @@ tests/run.sh          # tiers 0 and 1: a few minutes, no model. CI runs this on 
 | Tier | What it checks | Needs | Cost |
 |---|---|---|---|
 | **0. Static** (`tests/static/check.py`) | The prose is consistent with itself: every skill, worker, file, label, limit and `koujou` command that one file names exists in another; frontmatter is valid; scripts parse; scenarios are well formed | python3 | under a second |
-| **1. CLI** (`tests/cli/test_koujou.sh`) and scenario setups | `koujou init`, `doctor`, `accept`, `ready`, `times`, `wait` and `converge` against real beads in a temp directory; every scenario's fixture still builds | beads | one to two minutes in CI, five or more on a laptop |
-| **2. Module scenarios** (`tests/scenarios/*`, `tier: module`) | One worker or one rule, in a prepared situation, judged by what is true afterwards | Claude Code | one agent, under a minute each |
+| **1. CLI** (`tests/cli/test_koujou.sh`) and scenario setups | `koujou init`, `doctor`, `accept`, `ready`, `spawned`, `times`, `wait` and `converge` against real beads in a temp directory; every scenario's fixture still builds | beads | one to two minutes in CI, five or more on a laptop |
+| **2. Module scenarios** (`tests/scenarios/*`, `tier: module`) | One worker, or one stage (spec, plan, adopt) run on its own up to its gate, in a prepared situation, judged by what is true afterwards | Claude Code | one agent each: under a minute for a worker, two to three for a stage. The two browser scenarios share one browser: run them one after the other |
 | **3. Demo** (`tests/scenarios/demo-todo`, `demo-fix-loop`) | The whole pipeline, from a raw request to a merged branch; and the fix loop on a built epic with a planted bug whose cause is one level deeper | Claude Code | 12 to 25 agent runs; 6 to 12 for the fix loop |
 
 Run the cheapest tier that can fail for your change first. Most mistakes in a skill edit are broken references, and tier 0 finds those for free.
@@ -68,11 +68,14 @@ Changes to the CLI get a line in `tests/cli/test_koujou.sh` instead. A new cross
 | `agents/factory-security.md` | `security-finds-traversal`, `security-passes-clean-build` |
 | `agents/factory-builder.md` | `builder-meets-acceptance`, `builder-bug-deeper-cause`, `builder-bug-in-lane` |
 | `agents/factory-tester.md` | `tester-writes-acceptance` (its tests must pass on a correct build of the feature and fail on a planted wrong one) |
-| `agents/factory-validator.md` | `validator-finds-kept-record`, `validator-passes-stored-build` (the store disagrees with the interface) |
+| `agents/factory-validator.md` | `validator-finds-kept-record`, `validator-passes-stored-build` (the store disagrees with the interface); `validator-finds-forgotten-tick`, `validator-passes-page` (in a real browser: a page that shows a change the API never received) |
+| `skills/factory-spec/SKILL.md` | `spec-finds-prerequisite` (a small-sounding request that needs two things only the user has; stops at its gate) |
+| `skills/factory-plan/SKILL.md` | `plan-covers-design` (the plan judged as data: lint, swarm, acceptance commands that fail now, every row of the design owned by a task) |
+| `skills/factory-adopt/SKILL.md` | `adopt-writes-profile` (a project with its own rules and a file-backed store; the profile judged against the fixture's facts) |
 | `skills/factory/reference/swarm.md` | `builder-rebases-conflict` |
 | `skills/factory-run/SKILL.md` and the stages around it | `demo-todo` (a clean run), `demo-fix-loop` (validation finds a bug; triage, the bug stack, `koujou converge`) |
 
-Not covered yet, and good first contributions: `factory-tester` and `factory-validator` in a browser (a fixture with a page and a planted UI bug; the tester's reviewer catching a suite that passes on a wrong stand-in product), `factory-adopt` (a fixture project in, a profile with a Test map out), `factory-spec` and `factory-plan` on their own (a raw request in, a lint-clean plan with acceptance commands out), the stuck path (a fix that fails validation twice, a chain deeper than `max_fix_depth`), `factory-ship` against a remote, and the rules the second real project added to `factory-run` that no fixture reaches: a worker gone quiet, a pre-existing security finding whose harm the epic raises, a design row no task owns. The CLI tier covers what that project's shape broke: a code repository apart from the tracker (`BEADS_DIR`), tasks left open until the merge (`koujou ready`, `koujou converge`), and a runner that prints the worktree path but no test names (`koujou accept`).
+Not covered yet, and good first contributions: `factory-design` on its own; the tester's reviewer catching a suite that passes on a wrong stand-in product; the stuck path (a fix that fails validation twice, a chain deeper than `max_fix_depth`) with real agents; `factory-ship` against a remote; `factory-retro`; and two rules in `factory-run` that only an orchestrator in a long run meets: replacing a worker gone quiet (the flag itself, in `koujou ready`, is tested in tier 1) and fixing a pre-existing security finding whose harm the epic raises (seen once, in a `demo-todo` run, without being asked for). The CLI tier covers what the second real project's shape broke: a code repository apart from the tracker (`BEADS_DIR`), tasks left open until the merge (`koujou ready`, `koujou converge`), a runner that prints the worktree path but no test names (`koujou accept`), and agents nobody counted (`koujou spawned`).
 
 ## Demo baseline
 
@@ -90,6 +93,7 @@ Compare a demo run's `koujou times` with the last one recorded here; a change th
 |---|---|---|---|---|---|---|
 | 2026-11-21 | 16 of 16 checks | 2 (one under the other) | 8 | 7 m 36 s | 2 | 1, 0 |
 | 2026-11-22 | 17 of 17 checks (one check added: `bd lint`) | 2 (one under the other) | 6 | 13 m 40 s (the orchestrator was also running other tests) | 2 | 1, 0 |
+| 2026-11-22, second run | 17 of 17 checks | 2 (one under the other) | 7, counted with `koujou spawned` (5 on tasks, 2 for the run) | 6 m 01 s | 2 | 1, 0 |
 
 ## Limits worth knowing
 
