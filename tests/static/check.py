@@ -97,11 +97,18 @@ for name in agents:
         fail(f"README.md: worker {name} is not in the workers table")
 
 # 6. worker roster is the same everywhere it is listed
-for path, pattern in ((skills["factory"], r"\| `(factory-[a-z]+)`(?: \(QA\))? \| Subagent"), (skills["factory-run"], r"subagent types ([^.]*)\.")):
+# factory-security works only in the on-demand factory-security-review, never in the delivery loop.
+ON_DEMAND = {"factory-security"}
+for path, pattern, expected in (
+    (skills["factory"], r"\| `(factory-[a-z]+)`(?: \(QA\))? \| Subagent", set(agents)),
+    (skills["factory-run"], r"subagent types ([^.]*)\.", set(agents) - ON_DEMAND),
+):
     text = path.read_text()
     listed = set(re.findall(r"factory-[a-z]+", " ".join(re.findall(pattern, text))))
-    if listed != set(agents):
-        fail(f"{path.relative_to(ROOT)}: lists workers {sorted(listed)}, agents/ has {sorted(agents)}")
+    if listed != expected:
+        fail(f"{path.relative_to(ROOT)}: lists workers {sorted(listed)}, expected {sorted(expected)}")
+if "factory-security`" not in skills["factory-security-review"].read_text():
+    fail("skills/factory-security-review/SKILL.md: does not name the factory-security worker")
 
 # 7. templates and data files
 try:

@@ -2,6 +2,16 @@
 
 Changes the factory made to itself, each tied to the run that taught it. `factory-retro` appends here and checks earlier entries' expected effects against later runs.
 
+## 2026-11-22 — shukka v1 (shu-9bj): security review out of the loop
+
+The run took 18 h from first claim to last landing for 24 tasks, most of which built and reviewed in 5–50 minutes. Almost all the overrun was the security loop: epic-level lens agents ran 13–16 h each building live Docker and tar proofs; the end-of-epic review found 8 problems after everything had landed, each became a task with builder, reviewer and security re-check, and one of them (shu-9bj.8) spent 13 h across three re-checks. The orchestrator waited on silent reviewers and re-checks because the quiet check only watched builders. 120 agents in all. The owner: "I can do much faster without this loop".
+
+Applied at the owner's request:
+- **skills/factory-run, skills/factory, factory-ship, factory-retro, factory-plan, agents/factory-reviewer, README, flow diagram**: no security review in the delivery loop: no per-task security read, no epic security stage, no security condition on report or ship. The `security` label only marks where an on-demand review should look. Expected effect: an epic of shukka's size finishes in the time its build waves take (a few hours), with agent counts near 4 per task.
+- **skills/factory-security-review (new)**: the same three-lens review, run only when the user asks, on any branch or pull request; each agent time-boxed to 30 minutes, after which unproven findings are reported as reasoned; findings become beads (critical/high told to the user at once) and fixes go through factory-run as ordinary tasks. Expected effect: a security review costs under an hour of wall clock and never blocks a merge unless the user says so.
+- **skills/factory-run**: every agent brief carries a time box (reviewer 30 min, builder and validator 60); reviewers and the validator are checked against it at each landing, since `koujou ready` sees builders only. Expected effect: no agent runs hours past its box unnoticed.
+- **tests/static/check.py, demo-todo**: the roster check allows factory-security to live only in the on-demand skill; the demo expects no security.md.
+
 ## 2026-11-19 — linklab / ll-mms (lab run 1) and an existing Next.js project (factory-adopt trial)
 
 Applied during the run:

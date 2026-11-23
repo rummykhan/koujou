@@ -27,7 +27,7 @@ Work from what happened, not from impressions.
 - **User friction:** questions the user had to be asked late that could have been asked at the start; anything the user corrected.
 - **Time and cost:** `koujou times <epic-id>` (or `--label factory:pass-<n>`): build, review and queue time per task, bounces, rebases, agents spawned. Look for the task that took several times longer than its siblings, time spent waiting in the merge queue (lanes overlapped), and review time that rivals build time.
 - **Merge conflicts:** which files conflicted, between which tasks, and whether their lanes or a missing dependency should have kept them apart.
-- **Security findings:** each introduced finding, and whether the task's reviewer or its acceptance criteria could have caught it earlier.
+- **Security findings** (only if the user ran `factory-security-review`): each introduced finding, and whether the task's reviewer or its acceptance criteria could have caught it earlier.
 
 ## 2. Find the causes
 

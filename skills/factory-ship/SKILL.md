@@ -5,7 +5,7 @@ description: Factory stage 5 — ship a validated epic or pass. Pushes the branc
 
 # Factory: ship
 
-Input: an epic or pass branch whose gate is green, whose reviews and security review passed, and whose last validation passed. Output: the work on the base branch, deployed where the project deploys, issues closed, tracker synced, machine clean.
+Input: an epic or pass branch whose gate is green, whose reviews passed and whose last validation passed. Output: the work on the base branch, deployed where the project deploys, issues closed, tracker synced, machine clean.
 
 Read `FACTORY.md` first: `## Git policy` (push, integration, who merges, merge method) and `## Deploy policy` (what a merge triggers, rollback, post-deploy checks). The profile decides how far this stage goes on its own:
 
@@ -47,7 +47,7 @@ git push -u origin factory/<epic-id>
 gh pr create --base <base> --head factory/<epic-id> --title "<outcome, in the project's style>" --body-file <work-order>/pr.md
 ```
 
-Write `pr.md` from the report: what changed for users, by requirement or issue; how it was verified (gate result, review counts, security review result, validator verdict, where the evidence is); what is not included (deferred, stuck, waiting on the user); what merging will trigger (a deploy to which environment); how to roll back. Keep it short enough to be read.
+Write `pr.md` from the report: what changed for users, by requirement or issue; how it was verified (gate result, review counts, validator verdict, a security review's result if the user asked for one, where the evidence is); what is not included (deferred, stuck, waiting on the user); what merging will trigger (a deploy to which environment); how to roll back. Keep it short enough to be read.
 
 One pull request per epic or pass. Task branches are not pushed; they were merged into the epic branch one at a time during the run.
 

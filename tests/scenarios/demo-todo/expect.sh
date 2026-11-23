@@ -40,7 +40,7 @@ s.close();"
 
 echo "    records"
 check "report.md exists and names what shipped" grep -qi 'shipped\|outcome' "${wo}report.md"
-check "security.md exists and names the three lenses" bash -c "grep -q access '${wo}security.md' && grep -q input '${wo}security.md' && grep -q exposure '${wo}security.md'"
+check "no security review ran in the loop (it is on demand only)" bash -c "test ! -e '${wo}security.md'"
 check "validation left evidence" bash -c "ls '${wo}evidence/' | grep -q ."
 check "time was recorded: every task has merged_at" bash -c "for i in \$(bd list --parent $epic --all --limit 0 --json --readonly | python3 -c 'import json,sys; print(\" \".join(i[\"id\"] for i in json.load(sys.stdin)))'); do bd show \$i --json --readonly | python3 -c 'import json,sys; sys.exit(\"merged_at\" not in (json.load(sys.stdin)[0].get(\"metadata\") or {}))' || exit 1; done"
 check "koujou times runs on the epic" koujou times "$epic"

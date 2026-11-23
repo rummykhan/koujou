@@ -19,6 +19,8 @@ raw idea ──► requirements ──► design ──► plan (epic + task gra
 
 Project setup comes first, once per project: `factory-setup`. It initialises beads, writes `FACTORY.md` (the project profile every other stage reads), and puts the factory block in `AGENTS.md`, which carries the living system design. It follows `factory-adopt` for an existing codebase and `factory-new` for a greenfield one.
 
+A security review is not a stage of the pipeline: the user asks for one when they want it, on any branch or pull request (`factory-security-review`), and its findings come back as beads.
+
 Each `▲ gate` is a point where the user approves before the next stage starts. Gates exist because an error caught in the requirements costs a sentence to fix and the same error caught after delivery costs the whole epic.
 
 ## Start here
@@ -52,7 +54,7 @@ One folder per work order, at the path `FACTORY.md` gives (default `docs/factory
 | `design.md` | factory-design | Architecture, data model, interfaces, decisions with alternatives, risks, test and rollout strategy |
 | `plan.json` | factory-plan | The epic and task graph, in `bd create --graph` format |
 | `intake.md` | factory-plan | For a pass picked from the backlog, in place of requirements: the issues, prerequisites, decisions with defaults, what cannot be verified locally |
-| `security.md` | factory-run | What the security review covered and found, and what happened to each finding |
+| `security.md` | factory-security-review (only when asked) | What the security review covered and found, and what happened to each finding |
 | `report.md` | factory-run | What shipped, evidence, time taken, deferred bugs, stuck items, what is waiting on the user |
 | `evidence/` | factory-validator | Screenshots, response captures, logs behind the validation verdict |
 | `retro.md` | factory-retro | What the run taught and what the factory changed about itself |
@@ -68,7 +70,7 @@ If the project already has homes for these (a `REQUIREMENTS.md`, a specs folder,
 | Orchestrator | This session | Merges only | Yes — the only writer |
 | `factory-builder` | Subagent, one per task, in its own worktree | Yes | No |
 | `factory-reviewer` | Subagent, fresh context per review | No | No |
-| `factory-security` | Subagents, several at once, each reading the assembled change through one lens (access, input, exposure) | No | No |
+| `factory-security` | Subagents, several at once, each reading a change through one lens (access, input, exposure); only in `factory-security-review`, on demand | No | No |
 | `factory-tester` (QA) | Subagent, writes the automated acceptance suite from the requirements, in its own worktree | Tests only | No |
 | `factory-validator` (QA) | Subagent, black-box against the running product, in a real browser for UIs | No | No |
 

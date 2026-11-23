@@ -65,7 +65,7 @@ Changes to the CLI get a line in `tests/cli/test_koujou.sh` instead. A new cross
 | Subject | Scenarios |
 |---|---|
 | `agents/factory-reviewer.md` | `reviewer-fails-weak-build`, `reviewer-fails-hollow-tests` (a correct product whose acceptance tests would pass on a broken one), `reviewer-passes-good-build` |
-| `agents/factory-security.md` | `security-finds-traversal`, `security-passes-clean-build` |
+| `agents/factory-security.md` (used by `skills/factory-security-review`, on demand) | `security-finds-traversal`, `security-passes-clean-build` |
 | `agents/factory-builder.md` | `builder-meets-acceptance`, `builder-bug-deeper-cause`, `builder-bug-in-lane` |
 | `agents/factory-tester.md` | `tester-writes-acceptance` (its tests must pass on a correct build of the feature and fail on a planted wrong one) |
 | `agents/factory-validator.md` | `validator-finds-kept-record`, `validator-passes-stored-build` (the store disagrees with the interface); `validator-finds-forgotten-tick`, `validator-passes-page` (in a real browser: a page that shows a change the API never received) |

@@ -46,7 +46,7 @@ The task that wires the pieces into the runnable product (the entry point, the c
 
 When the work is an existing backlog issue with no criteria, planning it means bringing that one issue up to standard: add acceptance criteria, a lane and dependencies to it (`bd update`), leaving the rest of the backlog alone.
 
-A task whose lane touches sign-in, sessions, permissions, redirects, file handling, outbound requests, payments, secrets or dependencies gets the label `security`: it will be read by a security reviewer as well as the ordinary one.
+A task whose lane touches sign-in, sessions, permissions, redirects, file handling, outbound requests, payments, secrets or dependencies gets the label `security`: it marks where an on-demand security review (`factory-security-review`) should look first. It changes nothing in the delivery loop.
 
 Kinds of task to remember: a `spike` for each unknown the design flagged; migration and rollout tasks; documentation the project requires in the same change; a `decision` bead with a gate for anything the user still has to choose.
 

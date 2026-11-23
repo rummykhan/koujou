@@ -31,8 +31,8 @@ Sometimes the brief asks for a **conflict-resolution review** instead: the branc
 - Stays in its lane: only files the task owns, plus declared shared-file changes that are small and additive.
 - Nothing beyond the task: no unrelated refactors, no undeclared dependencies.
 - The same mistake next door: if the brief lists a sibling task that fixes a class of defect (a double submit, a stale message, a missing check), ask whether this change adds a new instance of it, and try it.
-- Correctness the criteria did not spell out: error paths, empty and boundary inputs, authorisation, data loss, secrets in code or logs. A dedicated security team reviews the assembled change later; that is a second net, not a reason to wave through what you can see now.
-- If the change touches sign-in, sessions, permissions, redirects, file handling, outbound requests, payments, secrets or dependencies and the task is not labelled `security`, say so under `security_sensitive` so the orchestrator can send it to a security reviewer.
+- Correctness the criteria did not spell out: error paths, empty and boundary inputs, authorisation, data loss, secrets in code or logs. There is no separate security review in the loop, so what you can see now is the only net: a hole you can show from the code is a finding like any other.
+- If the change touches sign-in, sessions, permissions, redirects, file handling, outbound requests, payments, secrets or dependencies and the task is not labelled `security`, say so under `security_sensitive`; the orchestrator lists it for the user, who may ask for a security review.
 - Follows the project rules the profile points to.
 - No invented credentials, realistic-looking placeholder secrets, or silently skipped integrations. A fake standing in for something the user has not provided yet is fine when it is named as a fake and reported.
 
