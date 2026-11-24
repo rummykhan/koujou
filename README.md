@@ -76,6 +76,7 @@ koujou update
 * **Security team, on demand:** `/factory-security-review` sends several agents to read a branch or pull request, each through one lens: access, untrusted input, data exposure, each time-boxed. It is not part of the delivery loop (it made runs several times slower); findings come back as beads and you decide what to fix now. Security closes holes without changing what your product does: a fix that would remove or restrict a feature is allowed only for serious harm (data, accounts, money, trust), and then you decide.
 * **Acceptance tests close tasks:** every task's criteria name their checks before any code exists, and its tests carry the task id, so `koujou accept <task>` proves it done, at review, at landing and again before shipping.
 * **Nobody grades their own work:** a separate reviewer checks every task against those criteria.
+* **Time-boxed agents:** every agent's brief carries a time limit (a reviewer 30 minutes, a builder or the validator 60). Past it, a reviewer reports what it verified and marks the rest unverified; a worker that has gone quiet, builder, reviewer or validator, is noticed at the next landing and replaced, instead of being waited on for hours.
 * **QA department:** a test engineer writes the acceptance suite from the requirements (Playwright for UIs); a validator uses the running product in a real browser, then reads back what it stored (the database, your cloud account, GitHub) wherever it has read access, and saves evidence. Everything is validated on a local build, so you need no cloud account; a deployed test environment is optional.
 * **Works out how to test your project:** setup reads the code, the tests and the infrastructure and writes a test map: how each module is exercised, where its state lives and how to read that back. You are asked only about what it could not infer, before work starts. Ask it to check one module on its own (`/factory test the billing module`) and it does.
 * **Ships by pull request:** the factory pushes the branch, opens the PR, waits for CI, merges when you approve, then checks the deploy and closes the issues. Production changes a normal deploy doesn't make (a new table, a migration) follow a fixed routine: diff first, apply only the expected change, verify, and check after the deploy that the shipped code is really using it.
@@ -138,7 +139,7 @@ Wave 2: 1 issues
 Max parallelism: 3
 ```
 
-**3. The swarm builds.** Each ready task gets a worktree and a builder; a QA tester writes acceptance tests alongside. Reviewers pass or bounce each branch; passing branches land one at a time, and the rest rebase.
+**3. The swarm builds.** Each ready task gets a worktree and a builder; a QA tester writes acceptance tests alongside. Reviewers pass or bounce each branch; passing branches land one at a time, and the rest rebase. There is no security stage in the loop: run `/factory-security-review` on the branch or the pull request when you want one.
 
 **4. QA.** The acceptance suite runs and a validator uses the real product, locally. Bugs are triaged: fix now (back into the loop) or defer to the next phase.
 
@@ -203,7 +204,7 @@ A new rule comes with a scenario that fails without it. [`tests/README.md`](test
 
 ## 🧪 Status
 
-Koujou is new. It has delivered two epics and a six-issue backlog pass end to end in a lab project (through a pull request, CI and merge), and two backlog passes on a live Next.js product: four issues, then six, the second through pull request, merge, a production deploy the factory watched, and a smoke check of the live site. Not yet exercised with real agents: validation of a deployed test environment, a task marked stuck, the requirements and design stages on real work, and a brand-new project (`/factory-setup` on an empty directory). See [`lab/README.md`](lab/README.md) for exactly what has and has not been tested.
+Koujou is new. It has delivered two epics and a six-issue backlog pass end to end in a lab project (through a pull request, CI and merge), and two backlog passes on a live Next.js product: four issues, then six, the second through pull request, merge, a production deploy the factory watched, and a smoke check of the live site. It has also taken a new infrastructure library, [shukka](https://github.com/rummykhan/shukka), through requirements, design, planning and some 30 tasks, validated by a live acceptance suite against a real AWS account; that run is why the security review left the loop and agents got time limits (see [`CHANGELOG.md`](CHANGELOG.md)). Not yet exercised with real agents: validation of a deployed test environment, a task marked stuck, `/factory-security-review` on its own, and a brand-new project (`/factory-setup` on an empty directory). See [`lab/README.md`](lab/README.md) for exactly what has and has not been tested.
 
 ## 📝 License
 
