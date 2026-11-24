@@ -29,6 +29,15 @@ check "doctor flags a profile from an older factory, naming what is missing" bas
 grep -v -e '^## Test map' "$TESTS_DIR/fixtures/todo/FACTORY.md" > FACTORY.md
 check "doctor flags a profile with no Test map" bash -c '"$0" doctor 2>&1 | grep -q "predates.*Test map"' "$TESTS_DIR/../bin/koujou"
 
+echo "  koujou awake"
+export KOUJOU_STATE="$WORK/state"
+mkdir -p "$WORK/fakebin"; printf '#!/bin/bash\nexec sleep 300\n' > "$WORK/fakebin/caffeinate"; chmod +x "$WORK/fakebin/caffeinate"
+check "awake start keeps the machine awake and records the pid" bash -c 'PATH="$0:$PATH" koujou awake start | grep -q "keeping this machine awake" && kill -0 "$(cat "$KOUJOU_STATE/awake.pid")"' "$WORK/fakebin"
+check "awake start twice does not start a second keeper" bash -c 'PATH="$0:$PATH" koujou awake start | grep -q "already"' "$WORK/fakebin"
+check "awake status reports it" bash -c 'koujou awake status | grep -q "awake (pid"'
+check "awake stop ends it" bash -c 'p=$(cat "$KOUJOU_STATE/awake.pid"); koujou awake stop | grep -q "stopped" && sleep 0.2 && ! kill -0 "$p" 2>/dev/null && test ! -e "$KOUJOU_STATE/awake.pid"'
+unset KOUJOU_STATE
+
 echo "  koujou accept"
 todo_repo "$WORK/a" >/dev/null || fail "fixture repo"
 good=$(new_task "passes" "d" "- x — test: unit" "Lane: test/")

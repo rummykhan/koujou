@@ -45,6 +45,8 @@ Stop and tell the user if any of these fails; a run started on a bad footing was
 
 Record the start: `bd update <epic> --claim --set-metadata validate_rounds=0`.
 
+Keep the machine awake for the whole run: `koujou awake start` (and `koujou awake stop` after the report). A run outlasts the machine's idle timer, and a sleeping laptop stalls every agent and makes timed waits fail for reasons that have nothing to do with the code: on shukka v1 a lid closed for four hours turned two acceptance cases red and a gate's waits into timeouts. On battery a closed lid still sleeps the machine; when `koujou awake` says so, tell the user to plug in or keep the lid open.
+
 ## Keeping time
 
 Beads stamps `started_at` when an issue is first claimed and `closed_at` when it closes. The run adds the points in between as metadata, so the report and the retro can say where the time went. Stamp each as it happens, in UTC:
@@ -203,6 +205,7 @@ Only when every child is closed (or `factory:awaiting-merge`) and the last valid
 - Update the System design in `AGENTS.md` to match what is now built (`~/.claude/skills/factory/reference/agents-template.md`): the sections this epic changed, the commit stamp, and the epic removed from "In progress". Commit it on the epic branch so the design and the code land together.
 - Update the other docs the profile requires in the same change (roadmap, decision log, pitfalls learned during the run).
 - Write `report.md` in the work order: what shipped by requirement; evidence (gate result, validator verdict, commit, evidence files); time (the output of `koujou times`: per task, build, review and queue time, attempts, agents; and the run's total); **waiting on you** (open `factory:needs-user` items: what is needed, where to put it, what it unblocks); deferred items with ids; stuck items; rounds used; anything built against a fake; anything not verified.
+- `koujou awake stop`.
 - Clean up what the run created on the machine: task worktrees and branches, servers you started, and test databases or tables made for the run. Scratch folders too, and during the run, not only at the end: reviewers who build a copy of the project to mutate it leave a gigabyte each, and fourteen tasks left six. Leave the epic branch and its worktree: shipping needs them.
 - Run `factory-ship`: it pushes the branch, opens the pull request, waits for CI, merges with the user's approval, checks the deploy, and closes the issues and the epic. How far it goes without asking is the profile's git policy. Where there is no remote and the profile lets the factory merge locally, it does that and closes the epic: `bd close <epic> --reason "<summary> | evidence: validator pass at <sha> | residue: <deferred ids>"`.
 

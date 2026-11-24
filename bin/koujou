@@ -8,6 +8,7 @@
 #   koujou spawned <id>...   count one agent run against a task, or against the epic for agents no task owns
 #   koujou converge <epic-id> | --label <label> [--record]   may the fix loop go on? answered from the run's record
 #   koujou wait <epic-id> start|end   time a run spends stopped, waiting on you
+#   koujou awake start|stop|status   keep this machine from sleeping while a run lasts (macOS caffeinate, Linux systemd-inhibit)
 #   koujou update      pull the latest factory and relink
 #   koujou link        (re)link skills, agents and this command into ~/.claude and ~/.local/bin
 #   koujou uninstall   remove the links (beads and your projects are left alone)
@@ -139,6 +140,33 @@ cmd_wait() { # time a run spends stopped, waiting on the user
   python3 "$SRC/bin/koujou-wait.py" "$@"
 }
 
+cmd_awake() { # keep the machine awake for a long run; sleep stalls agents and makes timed waits fail
+  local dir="${KOUJOU_STATE:-$HOME/.koujou}" pidf hours="${KOUJOU_AWAKE_HOURS:-12}"
+  mkdir -p "$dir"; pidf="$dir/awake.pid"
+  local running=""; [[ -f "$pidf" ]] && kill -0 "$(cat "$pidf")" 2>/dev/null && running=$(cat "$pidf")
+  case "${1:-status}" in
+    start)
+      if [[ -n "$running" ]]; then say "already keeping this machine awake (pid $running)"; return 0; fi
+      if command -v caffeinate >/dev/null 2>&1; then
+        nohup caffeinate -dimsu -t $((hours * 3600)) >/dev/null 2>&1 & echo $! > "$pidf"
+        say "keeping this machine awake for up to ${hours}h (caffeinate, pid $(cat "$pidf")); stop with: koujou awake stop"
+        if command -v pmset >/dev/null 2>&1 && pmset -g batt 2>/dev/null | grep -q "Battery Power"; then
+          say "on battery: closing the lid will still sleep the machine. Plug in, or keep the lid open, until the run ends."
+        fi
+      elif command -v systemd-inhibit >/dev/null 2>&1; then
+        nohup systemd-inhibit --what=sleep:idle --who=koujou --why="factory run" sleep $((hours * 3600)) >/dev/null 2>&1 & echo $! > "$pidf"
+        say "keeping this machine awake for up to ${hours}h (systemd-inhibit, pid $(cat "$pidf")); stop with: koujou awake stop"
+      else
+        say "no caffeinate or systemd-inhibit here; keep the machine awake yourself while the run lasts"; return 1
+      fi;;
+    stop)
+      if [[ -n "$running" ]]; then kill "$running" 2>/dev/null || true; say "stopped keeping this machine awake"; else say "not keeping this machine awake"; fi
+      rm -f "$pidf";;
+    status) if [[ -n "$running" ]]; then say "awake (pid $running)"; else say "not keeping this machine awake"; fi;;
+    *) say "usage: koujou awake start|stop|status"; return 2;;
+  esac
+}
+
 cmd_doctor() {
   PROBLEMS=0
   say "Installation"
@@ -174,6 +202,7 @@ case "${1:-}" in
   times) shift; cmd_times "$@";;
   accept) shift; cmd_accept "$@";;
   wait) shift; cmd_wait "$@";;
+  awake) shift; cmd_awake "$@";;
   ready) shift; cmd_ready "$@";;
   spawned) shift; cmd_spawned "$@";;
   converge) shift; cmd_converge "$@";;

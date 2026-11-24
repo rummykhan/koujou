@@ -2,6 +2,12 @@
 
 Changes the factory made to itself, each tied to the run that taught it. `factory-retro` appends here and checks earlier entries' expected effects against later runs.
 
+## 2026-11-24 — shukka v1 (shu-9bj): keep the machine awake
+
+The shukka v1 acceptance run on rc.8 lost two cases, and the rc.9 attempt never started, because the laptop slept: a closed lid for four hours, then an overnight sleep that left GitHub unreachable and turned four gate tests into timeouts. The suite's own `caffeinate` fixed it for that project; the owner asked for it in the factory.
+
+- **bin/koujou, skills/factory-run, README**: `koujou awake start|stop|status` keeps the machine awake (macOS `caffeinate -dimsu`, Linux `systemd-inhibit`, capped at 12 h) and warns when on battery, where a closed lid still sleeps the machine; factory-run starts it at preflight and stops it after the report. Expected effect: no run fails or stalls because the machine slept.
+
 ## 2026-11-22 — shukka v1 (shu-9bj): security review out of the loop
 
 The run took 18 h from first claim to last landing for 24 tasks, most of which built and reviewed in 5–50 minutes. Almost all the overrun was the security loop: epic-level lens agents ran 13–16 h each building live Docker and tar proofs; the end-of-epic review found 8 problems after everything had landed, each became a task with builder, reviewer and security re-check, and one of them (shu-9bj.8) spent 13 h across three re-checks. The orchestrator waited on silent reviewers and re-checks because the quiet check only watched builders. 120 agents in all. The owner: "I can do much faster without this loop".

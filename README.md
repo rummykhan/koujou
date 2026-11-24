@@ -102,6 +102,7 @@ In your terminal:
 | `koujou spawned <id>...` | Count one agent run against a task, or against the epic for agents no single task owns (scouts, the validator), so `koujou times` and the run's budget see every agent. |
 | `koujou converge <epic-id>` | After a validation round: may the fix loop go on? Says continue, which bug is stuck, or stop, from the run's record. |
 | `koujou wait <epic-id> start\|end` | Mark when a run stops to wait for you and when it resumes, so `koujou times` reports waiting apart from work. |
+| `koujou awake start\|stop\|status` | Keep the machine from sleeping while a run lasts (`caffeinate` on macOS, `systemd-inhibit` on Linux). The delivery loop starts it for you. |
 | `koujou update` | Pull the latest koujou and relink. |
 | `koujou uninstall` | Remove the links. Beads and your projects are untouched. |
 
