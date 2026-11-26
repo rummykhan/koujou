@@ -2,6 +2,13 @@
 
 Changes the factory made to itself, each tied to the run that taught it. `factory-retro` appends here and checks earlier entries' expected effects against later runs.
 
+## 2026-11-25 — shukka v1 and the Trendigle switch-over: lessons on time
+
+shukka v1 took 42 h from first claim to last landing and 135 agents, then the production switch-over needed three more shukka releases (v1.0.1–v1.0.3). The owner: "it took way long". Where the time went, beyond the security loop already removed: nine live acceptance candidates at 1.5–2 h each, found one or a few defects at a time, about half in the acceptance suite itself (never run live until the end); a release path the OIDC spike never exercised (annotated tags); four migration defects only the real consumer could show; one-line fixes routed through full review rounds; and a laptop that slept through two runs.
+
+- **skills/factory-plan**: a walking skeleton run live in the first wave when proof needs an outside system; the QA suite runs live early; spikes exercise the exact production path; adoption by an existing system gets a rehearsal on its real shape. Expected effect: the first live run happens in the first hours, and the last live runs find nothing new.
+- **skills/factory-run**: small fixes go small (orchestrator reads the diff, runs the gate, says so); a slow validation run is fully triaged and all its failures fixed in parallel before the next run. Expected effect: no more than two or three slow validation runs per epic.
+
 ## 2026-11-24 — shukka v1 (shu-9bj): keep the machine awake
 
 The shukka v1 acceptance run on rc.8 lost two cases, and the rc.9 attempt never started, because the laptop slept: a closed lid for four hours, then an overnight sleep that left GitHub unreachable and turned four gate tests into timeouts. The suite's own `caffeinate` fixed it for that project; the owner asked for it in the factory.
