@@ -2,6 +2,10 @@
 
 Changes the factory made to itself, each tied to the run that taught it. `factory-retro` appends here and checks earlier entries' expected effects against later runs.
 
+## 2026-11-27 — a builder's stray shell
+
+- **agents/factory-builder**: no command that waits on stdin or outlives the builder; probes get a `timeout`. Because shu-ph3's builder ran `cat > probe.sh` with no input, and the shell held the agent open for 63 hours after it reported done. Expected effect: no builder shell left running after its report.
+
 ## 2026-11-26 — lean by default, inside an enforced budget
 
 The owner: the factory solved "the agent waits on me after every step" but not "faster than I would by hand". The numbers agree: shukka v1 took 61 h and 135 agents; shu-cio, run lean by the orchestrator's judgement, took 3.5 h and 10. The earlier lessons were prose nobody had to follow, and nothing measured whether a run beat working by hand.

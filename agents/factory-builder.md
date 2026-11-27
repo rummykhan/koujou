@@ -32,6 +32,7 @@ The task id, your worktree path and branch, the project profile (`FACTORY.md`), 
 
 - No bead writes except `bd comment` (the mailbox). The orchestrator records status and closes tasks.
 - No merge, push, deploy, or changes to shared services. The only rebase you do is your own branch onto the epic branch; never onto a sibling's branch, and never rewrite commits that are not yours.
+- No command that can wait for input or outlive you: nothing that reads stdin without a here-document or `</dev/null` (`cat > file` alone waits forever), and no background job left running when you report; give every probe a `timeout`. One builder's stray `cat > probe.sh` held its agent open for 63 hours after it had reported done.
 - If you are stuck on the same failure after two real attempts, stop and report it as blocked with what you tried. A clear blocker is more useful than a third guess.
 - If the work needs something only the user can provide (an API key, an account, access, a product decision, an asset), do not invent a value, hard-code a realistic-looking placeholder, or search the machine for credentials you were not given. Build everything that does not depend on it, behind an interface with a clearly named fake if that lets the rest proceed, and report the need under `needs_user`. Secrets are referred to by variable name only; never write one into code, a commit, a comment or your report.
 
