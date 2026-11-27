@@ -15,7 +15,7 @@ The factory is instructions that agents follow, so it is tested the way any agen
 | "test the reviewer", "test security", a file path | Tier 0 and 1, then every scenario whose `subject` is that file, and their controls |
 | "run the demo", or a change to `factory-run`, `factory-plan`, `factory-ship` or the swarm protocol | Everything above, then `demo-todo` |
 
-Say which tiers you are running and roughly what they cost before starting anything with agents: a module scenario is one agent for under a minute; the demo is 15 to 25 agent runs and tens of minutes.
+Say which tiers you are running and roughly what they cost before starting anything with agents: a module scenario is one agent for under a minute; the demo is 4 to 10 agent runs and 10 to 20 minutes.
 
 ## Tier 0 and 1: deterministic
 

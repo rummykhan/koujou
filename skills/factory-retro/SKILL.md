@@ -25,7 +25,8 @@ Work from what happened, not from impressions.
 - **Orchestrator friction:** every place you worked around a skill, hit an error following it, improvised a step it did not cover, or had to re-brief an agent because the first brief was not enough.
 - **Design drift:** does the System design in `AGENTS.md` still describe the code? Check a few named paths and interfaces. Did any worker act on a stale line in it?
 - **User friction:** questions the user had to be asked late that could have been asked at the start; anything the user corrected.
-- **Time and cost:** `koujou times <epic-id>` (or `--label factory:pass-<n>`): build, review and queue time per task, bounces, rebases, agents spawned. Look for the task that took several times longer than its siblings, time spent waiting in the merge queue (lanes overlapped), and review time that rivals build time.
+- **Time and cost:** `koujou times <epic-id>` (or `--label factory:pass-<n>`) and `koujou budget <epic-id>`: build, review and queue time per task, bounces, rebases, agents spawned, and the totals against the budget. Look for the task that took several times longer than its siblings, time spent waiting in the merge queue (lanes overlapped), review time that rivals build time, and every agent that caught nothing (a reviewer that passed first time, a scout whose report changed nothing): those are the next things to cut.
+- **Against doing it by hand:** the factory is only worth running if it is at least as fast as the user working directly with one agent. Estimate honestly how long a single session would have taken for the same result, from the size of the diff and the live cycles it needed, and say which side won and by how much.
 - **Merge conflicts:** which files conflicted, between which tasks, and whether their lanes or a missing dependency should have kept them apart.
 - **Security findings** (only if the user ran `factory-security-review`): each introduced finding, and whether the task's reviewer or its acceptance criteria could have caught it earlier.
 
@@ -51,6 +52,7 @@ Write changes the way the rest of the factory is written:
 - Edit the existing sentence or section where the guidance belongs. Don't append a list of patches at the end of a file.
 - Keep it general. "Stop processes by PID" is a lesson; "don't run pkill on linklab" is a diary entry.
 - **Remove as well as add.** Every instruction costs attention on every future run. If a step never caught anything, or guards against a mistake workers no longer make, cut or shorten it and note that in the changelog.
+- Prefer changes that remove an agent or a round trip over ones that add a check. A new check must say which incident it would have caught and what it costs per run; speed is a requirement, not a nice-to-have.
 - Don't tune a worker toward leniency to reduce bounces. A reviewer that fails less because it checks less is a regression.
 
 ## 4. Apply
@@ -72,4 +74,10 @@ Read the last few `CHANGELOG.md` entries. For each expected effect, did this run
 
 ## 6. Report
 
-Write `retro.md` in the work order: the numbers (tasks, first-pass review rate, validation rounds, bugs by stage caught vs. stage that could have caught, blockers found late), what changed at each level and why, what was removed, and proposals waiting for the user. Tell the user the short version: what the factory learned and what it changed about itself.
+Write `retro.md` in the work order. It opens with a `## Speed` table, one row per run this project has had (copy the earlier rows from the last retro), so the trend is visible at a glance:
+
+```markdown
+| Run | Tasks | Agents (budget) | Working hours (budget) | Hand estimate | Faster than by hand? |
+```
+
+A run slower than by hand gets a cause and a change aimed at it, or the retro says plainly that the factory should not have been used for that kind of work. Then: the numbers (tasks, first-pass review rate, validation rounds, bugs by stage caught vs. stage that could have caught, blockers found late), what changed at each level and why, what was removed, and proposals waiting for the user. Tell the user the short version: what the factory learned and what it changed about itself.

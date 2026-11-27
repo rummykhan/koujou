@@ -71,13 +71,13 @@ koujou update
 ## 🛠 Features
 
 * **Idea to shipped:** requirements, system design, epics and tasks, build, review, QA, deploy, validation, bug triage.
-* **Swarm in worktrees:** independent tasks are built at the same time, each agent in its own git worktree.
+* **Lean, inside a budget:** a few builders (three at most) on a few larger tasks, each in its own git worktree. Every run gets a budget of agents and working time (by default three agents and an hour per task); `koujou spawned` checks it on every agent and stops the run to ask you before going over. The factory has to beat you working by hand with one agent, and every retro says whether it did.
 * **Merge queue:** finished branches land one at a time; the others rebase onto the result, and the agent that wrote a change resolves its own conflicts.
 * **Security team, on demand:** `/factory-security-review` sends several agents to read a branch or pull request, each through one lens: access, untrusted input, data exposure, each time-boxed. It is not part of the delivery loop (it made runs several times slower); findings come back as beads and you decide what to fix now. Security closes holes without changing what your product does: a fix that would remove or restrict a feature is allowed only for serious harm (data, accounts, money, trust), and then you decide.
 * **Acceptance tests close tasks:** every task's criteria name their checks before any code exists, and its tests carry the task id, so `koujou accept <task>` proves it done, at review, at landing and again before shipping.
-* **Nobody grades their own work:** a separate reviewer checks every task against those criteria.
+* **Nobody grades their own work:** the orchestrator checks every task by running its acceptance tests and the gate and reading the diff; one independent reviewer reads the assembled epic, and tasks labelled `security` or `review` get their own reviewer too.
 * **Time-boxed agents:** every agent's brief carries a time limit (a reviewer 30 minutes, a builder or the validator 60). Past it, a reviewer reports what it verified and marks the rest unverified; a worker that has gone quiet, builder, reviewer or validator, is noticed at the next landing and replaced, instead of being waited on for hours.
-* **QA department:** a test engineer writes the acceptance suite from the requirements (Playwright for UIs); a validator uses the running product in a real browser, then reads back what it stored (the database, your cloud account, GitHub) wherever it has read access, and saves evidence. Everything is validated on a local build, so you need no cloud account; a deployed test environment is optional.
+* **QA department:** builders write each task's acceptance tests (a separate test engineer only for large work whose flows cross tasks); a validator uses the running product in a real browser, then reads back what it stored (the database, your cloud account, GitHub) wherever it has read access, and saves evidence. Everything is validated on a local build, so you need no cloud account; a deployed test environment is optional.
 * **Works out how to test your project:** setup reads the code, the tests and the infrastructure and writes a test map: how each module is exercised, where its state lives and how to read that back. You are asked only about what it could not infer, before work starts. Ask it to check one module on its own (`/factory test the billing module`) and it does.
 * **Ships by pull request:** the factory pushes the branch, opens the PR, waits for CI, merges when you approve, then checks the deploy and closes the issues. Production changes a normal deploy doesn't make (a new table, a migration) follow a fixed routine: diff first, apply only the expected change, verify, and check after the deploy that the shipped code is really using it.
 * **Knows where the time went:** every task's build, review and queue time is recorded in beads; `koujou times` adds it up, with time spent waiting on you counted apart from work.
@@ -99,7 +99,8 @@ In your terminal:
 | `koujou accept <task-id>` | Run a task's acceptance tests (or `--parent <epic-id>` for all of an epic's). |
 | `koujou times <epic-id>` | Time per task (build, review, queue), bounces, rebases and agents used. |
 | `koujou ready <epic-id>` | The tasks of a run that can start now. Like `bd ready`, but a task that has landed and stays open until you merge counts as done, so the next wave shows up. Also lists what is in flight and for how long, and flags a worker that has been quiet far longer than any build so far. |
-| `koujou spawned <id>...` | Count one agent run against a task, or against the epic for agents no single task owns (scouts, the validator), so `koujou times` and the run's budget see every agent. |
+| `koujou budget <epic-id>` | The run's agents and working hours against its budget; exits 1 when over. |
+| `koujou spawned <id>...` | Count one agent run against a task, or against the epic for agents no single task owns (scouts, the validator), so `koujou times` and the run's budget see every agent; checks the budget and exits 3 when the run is over it. |
 | `koujou converge <epic-id>` | After a validation round: may the fix loop go on? Says continue, which bug is stuck, or stop, from the run's record. |
 | `koujou wait <epic-id> start\|end` | Mark when a run stops to wait for you and when it resumes, so `koujou times` reports waiting apart from work. |
 | `koujou awake start\|stop\|status` | Keep the machine from sleeping while a run lasts (`caffeinate` on macOS, `systemd-inhibit` on Linux). The delivery loop starts it for you. |
@@ -162,9 +163,9 @@ bd list --label factory:needs-user --status open
 | --- | --- |
 | **Orchestrator** | Your Claude Code session. Briefs agents, merges, records state in beads, talks to you. |
 | `factory-builder` | Implements one task in its own worktree. |
-| `factory-reviewer` | Independently checks a task against its acceptance criteria. Read-only. |
+| `factory-reviewer` | Independently reviews the assembled epic, and single tasks labelled `security` or `review`. Read-only. |
 | `factory-security` | On demand only (`/factory-security-review`): several at once, each hunting exploitable defects through one lens. Read-only. |
-| `factory-tester` | QA. Writes the automated acceptance suite from the requirements. |
+| `factory-tester` | QA, large work only. Writes the acceptance suite from the requirements. |
 | `factory-validator` | QA. Exercises the running product like a user. |
 
 Workers coordinate through a per-task mailbox (beads comments) and never touch each other's files. The rules are in [`skills/factory/reference/swarm.md`](skills/factory/reference/swarm.md).

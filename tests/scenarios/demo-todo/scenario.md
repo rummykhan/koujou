@@ -4,7 +4,7 @@ tier: demo
 subject: skills/factory-run/SKILL.md
 agent: orchestrator
 ---
-The whole factory on a small product: a raw request goes through requirements, plan, a parallel build with review and the merge queue, validation, and a local ship. About 15 to 25 agent runs. The session running the test is the orchestrator and also stands in for the user at the approval gates: approve each artifact as written, answer any question with the default it proposes, and record that it did so.
+The whole factory on a small product: a raw request goes through requirements, plan, a parallel build with review and the merge queue, validation, and a local ship. Lean by default: it must stay inside the budget `koujou budget` gives (about 10 agent runs for a plan of three tasks). The session running the test is the orchestrator and also stands in for the user at the approval gates: approve each artifact as written, answer any question with the default it proposes, and record that it did so.
 
 ## Brief
 

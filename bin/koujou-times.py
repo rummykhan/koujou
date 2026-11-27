@@ -110,7 +110,7 @@ def main(args):
         if ts(epic.get("closed_at")):
             print(f"  start to closed: {fmt(dur(s, ts(epic.get('closed_at'))))}")
         try:
-            run_level = int(m.get("agent_runs"))  # agents not tied to one task: scouts, security lenses, validators
+            run_level = int(m.get("agent_runs"))  # agents not tied to one task: the epic review, the validator, scouts
         except (TypeError, ValueError):
             run_level = 0
         if "validate_rounds" in m:
@@ -118,7 +118,7 @@ def main(args):
                   + (f" (open fix-now bugs after each: {str(m['round_open']).replace(',', ', ')})" if m.get("round_open") else ""))
     if runs_total or run_level:
         print(f"  agents spawned: {runs_total + run_level}"
-              + (f" ({runs_total} on tasks, {run_level} for the run: scouts, security lenses, validators)" if run_level
+              + (f" ({runs_total} on tasks, {run_level} for the run: the epic review, the validator, scouts)" if run_level
                  else (" (tasks only; none counted for the run itself: security lenses and validators go on the epic,"
                        " `koujou spawned <epic>`)" if epic and ((epic.get("metadata") or {}).get("security_at")
                                                                or (epic.get("metadata") or {}).get("validated_at")) else "")))

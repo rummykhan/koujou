@@ -21,7 +21,7 @@ tests/run.sh          # tiers 0 and 1: a few minutes, no model. CI runs this on 
 | **0. Static** (`tests/static/check.py`) | The prose is consistent with itself: every skill, worker, file, label, limit and `koujou` command that one file names exists in another; frontmatter is valid; scripts parse; scenarios are well formed | python3 | under a second |
 | **1. CLI** (`tests/cli/test_koujou.sh`) and scenario setups | `koujou init`, `doctor`, `accept`, `ready`, `spawned`, `times`, `wait` and `converge` against real beads in a temp directory; every scenario's fixture still builds | beads | one to two minutes in CI, five or more on a laptop |
 | **2. Module scenarios** (`tests/scenarios/*`, `tier: module`) | One worker, or one stage (spec, plan, adopt) run on its own up to its gate, in a prepared situation, judged by what is true afterwards | Claude Code | one agent each: under a minute for a worker, two to three for a stage. The two browser scenarios share one browser: run them one after the other |
-| **3. Demo** (`tests/scenarios/demo-todo`, `demo-fix-loop`) | The whole pipeline, from a raw request to a merged branch; and the fix loop on a built epic with a planted bug whose cause is one level deeper | Claude Code | 12 to 25 agent runs; 6 to 12 for the fix loop |
+| **3. Demo** (`tests/scenarios/demo-todo`, `demo-fix-loop`) | The whole pipeline, from a raw request to a merged branch; and the fix loop on a built epic with a planted bug whose cause is one level deeper | Claude Code | 4 to 10 agent runs; 5 to 8 for the fix loop |
 
 Run the cheapest tier that can fail for your change first. Most mistakes in a skill edit are broken references, and tier 0 finds those for free.
 
@@ -86,6 +86,7 @@ Compare a demo run's `koujou times` with the last one recorded here; a change th
 | 2026-11-20 | 20 of 20 checks | 4 | 17 | 7 m 54 s | 0 | 1 |
 | 2026-11-21 | 20 of 20 checks | 4 | 12 | 10 m 42 s | 0 | 0 |
 | 2026-11-22 | 20 of 20 checks, after one fix (deferred bugs filed without reproduction steps failed `bd lint`) | 5 (4 planned, 1 security fix) | 15 | 13 m 57 s | 0 | 0 |
+| 2026-11-26, lean | 23 of 23 checks (two added: inside the budget, retro Speed table) | 2 | 4 (2 builders, epic review, validator) | 7 m 14 s | 0 | 0 |
 
 `demo-fix-loop`:
 
@@ -94,6 +95,7 @@ Compare a demo run's `koujou times` with the last one recorded here; a change th
 | 2026-11-21 | 16 of 16 checks | 2 (one under the other) | 8 | 7 m 36 s | 2 | 1, 0 |
 | 2026-11-22 | 17 of 17 checks (one check added: `bd lint`) | 2 (one under the other) | 6 | 13 m 40 s (the orchestrator was also running other tests) | 2 | 1, 0 |
 | 2026-11-22, second run | 17 of 17 checks | 2 (one under the other) | 7, counted with `koujou spawned` (5 on tasks, 2 for the run) | 6 m 01 s | 2 | 1, 0 |
+| 2026-11-26, lean | 17 of 17 checks | 2 (one under the other) | 5 | about 12 m | 2 | 1, 0 |
 
 ## Limits worth knowing
 

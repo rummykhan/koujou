@@ -104,7 +104,8 @@ Beyond the product's own modules, give a row to what a change can break outside 
 
 - `max_fix_attempts`: 3   <!-- review bounces per task before it is marked stuck -->
 - `max_fix_depth`: 3   <!-- how deep a chain of bugs may go (a fix that uncovers a bug whose fix uncovers another) before the top one is marked stuck -->
-- `max_agent_runs`: <number, or leave out for the default: twelve per planned task, at least thirty>   <!-- the run's backstop. The validate-and-fix loop has no round limit: it runs while bugs are closing, and `koujou converge` stops it when they are not -->
+- `max_agent_runs`: <number, or leave out for the default: three per planned task, at least ten>   <!-- the run's agent budget; every `koujou spawned` checks it and exits 3 when over, and the orchestrator asks the user before spawning more -->
+- `time_budget_hours`: <number, or leave out for the default: one per planned task, at least four>   <!-- working time, less time waiting on the user; checked with the agent budget -->
 - `max_rebases`: 3   <!-- times one branch may be sent back from the merge queue for a conflict before it is marked stuck -->
 - `max_parallel_builders`: 3   <!-- worktrees building at once -->
 - Worktree root: `../.factory-worktrees/<repo-name>`   <!-- outside the repo so project tooling does not scan it -->

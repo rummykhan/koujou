@@ -2,6 +2,16 @@
 
 Changes the factory made to itself, each tied to the run that taught it. `factory-retro` appends here and checks earlier entries' expected effects against later runs.
 
+## 2026-11-26 — lean by default, inside an enforced budget
+
+The owner: the factory solved "the agent waits on me after every step" but not "faster than I would by hand". The numbers agree: shukka v1 took 61 h and 135 agents; shu-cio, run lean by the orchestrator's judgement, took 3.5 h and 10. The earlier lessons were prose nobody had to follow, and nothing measured whether a run beat working by hand.
+
+- **skills/factory-run**: lean is the rule: at most three builders; the orchestrator checks each task (acceptance command, gate, diff) instead of a per-task reviewer, which only `security`/`review`-labelled tasks get; one independent review of the assembled epic, its findings fixed in one batch; a round's fix-now bugs built together; small fixes made by the orchestrator without an agent. Expected effect: agents per task near 2, not 4–5.
+- **bin/koujou-budget.py, koujou spawned, koujou converge**: every run has a budget of agents (three per planned task, at least ten) and working hours (one per task, at least four, less time waiting on the user), from FACTORY.md or the epic's `agent_budget`/`time_budget_h`; `koujou spawned` checks it after every count and exits 3 when over, and the orchestrator must ask the user before the next agent. The old backstop was twelve agents per task. Expected effect: no run passes its budget without the user deciding it should.
+- **skills/factory-plan**: few, larger tasks (lane M: two to five); no QA task unless lane L flows cross slices; the walking skeleton is the first task, not a suggestion; passes of three issues or fewer get no scouts. Expected effect: fewer tasks and agents per epic, the first live run in the first hour.
+- **skills/factory-retro**: `retro.md` opens with a Speed table (agents and hours against budget, an estimate by hand, which won) carried across runs; changes that remove an agent are preferred to ones that add a check. Expected effect: every retro states whether the factory beat working by hand, and the trend is visible.
+- **agents/factory-builder, skills/factory, README, profile template**: say who checks the work now, and the budget.
+
 ## 2026-11-25 — shukka v1 and the Trendigle switch-over: lessons on time
 
 shukka v1 took 42 h from first claim to last landing and 135 agents, then the production switch-over needed three more shukka releases (v1.0.1–v1.0.3). The owner: "it took way long". Where the time went, beyond the security loop already removed: nine live acceptance candidates at 1.5–2 h each, found one or a few defects at a time, about half in the acceptance suite itself (never run live until the end); a release path the OIDC spike never exercised (annotated tags); four migration defects only the real consumer could show; one-line fixes routed through full review rounds; and a laptop that slept through two runs.

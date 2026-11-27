@@ -10,7 +10,7 @@ check "exactly one epic was created" test -n "$epic"
 wo=$(ls -d docs/factory/*/ 2>/dev/null | head -1)
 check "requirements exist and are approved" grep -q '^status: approved' "${wo}requirements.md"
 check "the plan was saved" test -f "${wo}plan.json"
-check "the epic has at least three tasks" test "$(q --parent "$epic" | python3 -c 'import json,sys; print(len(json.load(sys.stdin)))')" -ge 3
+check "the epic has at least two tasks" test "$(q --parent "$epic" | python3 -c 'import json,sys; print(len(json.load(sys.stdin)))')" -ge 2
 check "bd lint is clean" bd lint
 
 echo "    delivery"
@@ -44,6 +44,8 @@ check "no security review ran in the loop (it is on demand only)" bash -c "test 
 check "validation left evidence" bash -c "ls '${wo}evidence/' | grep -q ."
 check "time was recorded: every task has merged_at" bash -c "for i in \$(bd list --parent $epic --all --limit 0 --json --readonly | python3 -c 'import json,sys; print(\" \".join(i[\"id\"] for i in json.load(sys.stdin)))'); do bd show \$i --json --readonly | python3 -c 'import json,sys; sys.exit(\"merged_at\" not in (json.load(sys.stdin)[0].get(\"metadata\") or {}))' || exit 1; done"
 check "koujou times runs on the epic" koujou times "$epic"
+check "the run stayed inside its budget of agents and time" koujou budget "$epic"
 check "the System design in AGENTS.md mentions the new routes" bash -c "grep -q 'DELETE' AGENTS.md && grep -q 'PATCH' AGENTS.md"
 check "a retro was written" test -f "${wo}retro.md"
+check "the retro has a Speed table comparing the run with doing it by hand" bash -c "grep -q '^## Speed' '${wo}retro.md' && grep -qi 'by hand' '${wo}retro.md'"
 finish

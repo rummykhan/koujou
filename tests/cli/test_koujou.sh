@@ -116,6 +116,17 @@ check "spawned adds one to a task's count" bash -c '"$0" spawned "$1" | grep -q 
 koujou spawned $epic >/dev/null; koujou spawned $epic >/dev/null
 check "spawned on the epic counts agents no task owns, and times adds them" bash -c '"$0" times "$1" | grep -q "agents spawned: 6 (4 on tasks, 2 for the run"' "$TESTS_DIR/../bin/koujou" $epic
 check "spawned on an unknown id is an error" bash -c '! "$0" spawned td-nope 2>/dev/null' "$TESTS_DIR/../bin/koujou"
+echo "  koujou budget"
+check "a run inside its budget says so" bash -c '"$0" budget "$1" | grep -q "^within budget: 6 of 10 agents"' "$TESTS_DIR/../bin/koujou" $epic
+check "spawned reports the run's budget after counting" bash -c '"$0" spawned "$1" | grep -q "^within budget: 7 of 10 agents"' "$TESTS_DIR/../bin/koujou" $t1
+bd update $epic --set-metadata agent_budget=5 >/dev/null
+check "over the agent budget, budget exits 1 and says what to do" bash -c '! "$0" budget "$1" >/dev/null && "$0" budget "$1" | grep -q "^OVER BUDGET: 7 agents, budget 5.*ask whether to go on"' "$TESTS_DIR/../bin/koujou" $epic
+check "over the budget, spawned still counts but exits 3" bash -c '"$0" spawned "$1" >/dev/null; [ $? = 3 ] && bd show "$1" --json | grep -q "\"agent_runs\": *6"' "$TESTS_DIR/../bin/koujou" $t1
+bd update $epic --set-metadata agent_budget=100 --set-metadata time_budget_h=4 --set-metadata claimed_at=$(python3 -c "from datetime import datetime, timedelta, timezone; print((datetime.now(timezone.utc)-timedelta(hours=5)).strftime('%Y-%m-%dT%H:%M:%SZ'))") >/dev/null
+check "over the time budget is over too" bash -c '"$0" budget "$1" | grep -q "^OVER BUDGET: 5.0h working, budget 4h"' "$TESTS_DIR/../bin/koujou" $epic
+bd update $epic --set-metadata waited_s=7200 >/dev/null
+check "time spent waiting on the user does not count" bash -c '"$0" budget "$1" | grep -q "^within budget: .*3.0h of 4h"' "$TESTS_DIR/../bin/koujou" $epic
+bd update $epic --set-metadata time_budget_h=100 --set-metadata waited_s=0 >/dev/null
 koujou wait $epic start >/dev/null
 check "wait start stamps waiting_since" bash -c 'bd show "$0" --json | grep -q waiting_since' $epic
 check "a second start keeps the first stamp" bash -c '"$0" wait "$1" start | grep -q "already waiting"' "$TESTS_DIR/../bin/koujou" $epic
@@ -156,7 +167,14 @@ check "a chain four deep marks its top stuck" bash -c '"$0" converge "$1" | grep
 bd close $c3 --reason fixed >/dev/null
 check "…and it is unstuck when the bottom closes" bash -c '! "$0" converge "$1" | grep -q "^stuck"' "$K" $epic
 printf -- '- `max_agent_runs`: 2\n' >> FACTORY.md
-check "over the agent budget stops the loop" bash -c '! "$0" converge "$1" >/dev/null && "$0" converge "$1" | grep -q "stop: budget: 6 agent runs so far, limit 2"' "$K" $epic
+bd update $epic --set-metadata agent_budget=0 >/dev/null
+check "over the agent budget stops the loop" bash -c '! "$0" converge "$1" >/dev/null && "$0" converge "$1" | grep -Eq "stop: budget: [0-9]+ agent runs so far, limit 2"' "$K" $epic
+bd update $epic --set-metadata agent_budget=50 >/dev/null
+check "the user's raise on the epic beats the profile's limit" bash -c '"$0" budget "$1" | grep -Eq "^within budget: [0-9]+ of 50 agents"' "$K" $epic
+check "…in converge too" bash -c '"$0" converge "$1" | grep -Eq "of 50 agent runs used"' "$K" $epic
+check "budget reads FACTORY.md from the repository root, wherever it runs" bash -c 'mkdir -p sub && cd sub && bd update "$1" --set-metadata agent_budget=0 >/dev/null && "$0" budget "$1" | grep -Eq "^OVER BUDGET: [0-9]+ agents, budget 2"' "$K" $epic
+bd update $epic --set-metadata time_budget_h=0.5 >/dev/null
+check "a fractional time budget is kept" bash -c '"$0" budget "$1" | grep -q "budget 0.5h\|of 0.5h"' "$K" $epic
 check "converge on an unknown id is an error" bash -c '! "$0" converge td-nope' "$K"
 
 finish

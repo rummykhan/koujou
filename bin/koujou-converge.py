@@ -102,7 +102,7 @@ def main(args):
 
     runs = sum(num((d.get("metadata") or {}).get("agent_runs")) for d in issues.values()) + num(meta.get("agent_runs"))
     planned = sum(1 for d in issues.values() if d.get("issue_type") != "bug")
-    budget = limit("max_agent_runs", max(30, 12 * planned))
+    budget = num(meta.get("agent_budget")) or limit("max_agent_runs", max(10, 3 * planned))  # the user's raise wins
 
     stop = None
     if not going and live:

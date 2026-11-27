@@ -1,30 +1,40 @@
 ---
 name: factory-run
-description: Factory stage 4 — the delivery loop. Orchestrates a swarm of builder agents in parallel git worktrees to build an epic's tasks, with independent review, a merge queue, black-box validation, bug triage and a fix loop that stops when it is not converging, then hands over to factory-ship. Use when an epic (or single bead) is planned in beads and the user wants it built and shipped.
+description: Factory stage 4 — the delivery loop. Orchestrates a few builder agents in parallel git worktrees to build an epic's tasks inside a budget of agents and time, with the orchestrator checking each landing, one independent review of the assembled branch, a merge queue, black-box validation, bug triage and a fix loop that stops when it is not converging, then hands over to factory-ship. Use when an epic (or single bead) is planned in beads and the user wants it built and shipped.
 ---
 
 # Factory: delivery loop
 
-You are the orchestrator. You do not write product code; you brief agents, check their reports against evidence, merge, record state in beads, and decide what happens next. You are the only writer of bead state and the only one who talks to the user.
+You are the orchestrator. You do not write product code beyond the few-line fixes in *Small fixes go small*; you brief agents, check their reports against evidence, merge, record state in beads, and decide what happens next. You are the only writer of bead state and the only one who talks to the user.
 
 ```
-        ┌──────────────────────────── per wave of ready tasks ─────────────────────────────┐
-epic ──►│ claim → worktree → BUILD (parallel) → REVIEW → merge queue (one at a time) → close │──► more ready? ─┐
-        └───────────▲──────────────────┬──────────────▲───────────┬──────────────────────────┘                │
-                    └── fail, attempts < max ──┘      └─ rebase ──┘ (others rebase after each landing)        │
-   ┌──────────────────────────────────────────────────────────────────────────────────────────────────────────┘
-   └─► START LOCALLY → VALIDATE → findings? → TRIAGE ─► fix now → back to waves
-                                                                        │                  └► defer → later phase
-                                                                        └─► none → report → SHIP (factory-ship)
+        ┌───────────────────────────── per wave of ready tasks ───────────────────────────────┐
+epic ──►│ claim → worktree → BUILD (≤3 parallel) → CHECK (accept + gate + diff) → merge queue → close │──► more ready? ─┐
+        └───────────▲───────────────────────┬────────────────────────────────────────────────────┘                 │
+                    └── fail, attempts < max ┘   (tasks labelled security/review: an independent reviewer too)     │
+   ┌────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+   └─► ONE REVIEW of the assembled branch → START → VALIDATE → findings? → TRIAGE ─► fix now (one batch) → back to waves
+                                                                                   └► none → report → SHIP
 ```
 
 Read first: `FACTORY.md`, and in `~/.claude/skills/factory/reference/`: `beads.md`, `swarm.md`, `blockers.md`. Limits (`max_fix_attempts`, `max_parallel_builders`, `max_rebases`, `max_fix_depth`, default 3 each; `max_agent_runs`) come from the profile.
 
 Agents: use subagent types `factory-builder`, `factory-reviewer`, `factory-tester`, `factory-validator`. If they are not available in this session, use a general-purpose agent and start its prompt with "Read `~/.claude/agents/factory/factory-<role>.md` and take that role." (Newly installed agent types only register when a session starts.)
 
+## Lean by default
+
+The factory exists to save the user time: take the requirements once, then build, test and ship without stopping, at least as fast as the user would by hand. Every agent costs minutes of start-up and a context rebuilt from nothing, so the loop spends agents only where an independent eye catches what the builder cannot. On shukka v1 the loop gave every task its own builder, reviewer, re-reviews and a separate tester: 135 agents over 61 hours. The next epic, run lean by judgement, took 3.5 hours with 10. Lean is now the rule, not the judgement:
+
+- **At most `max_parallel_builders` builders (default 3)**, each holding a coherent slice; the plan makes fewer, larger tasks.
+- **The orchestrator checks each task, not a reviewer.** When a builder reports `done`, you run `koujou accept <task>` and the gate in its worktree yourself and read the diff against the criteria. That is the check that closes the task. Spawn a per-task `factory-reviewer` only when the task is labelled `security` or `review`, or when the diff leaves you in real doubt (it changes behaviour the criteria do not pin, or the tests look hollow).
+- **One independent review of the whole epic**, after the last landing and before validation (step 1h): one reviewer, the full epic diff, every task's criteria. Its blocking findings are fixed in one batch.
+- **No separate tester** unless the plan has a `qa` task (lane L with a UI the builders cannot test from inside their slice). Otherwise each task's builder writes its acceptance tests, named with the task id, as it already must.
+- **A budget, enforced.** At preflight, `koujou budget <epic>` prints the run's budget of agents and time; tell the user it in the start message. Every `koujou spawned` checks it and exits 3 when the run is over it: stop spawning, tell the user what is taking the time and what is left, and go on only when they raise it.
+- **Small fixes you make yourself** (see *Small fixes go small*).
+
 No security review runs in this loop. The user asks for one when they want it (`factory-security-review`, on the epic branch, a task or the pull request); its findings come back as beads, and a fix the user wants now enters this loop as an ordinary task. On shukka v1 the in-loop security review took most of an 18-hour run (untimed agents building live proofs for 12–16 hours, then a second serial loop of fixes and re-checks), and the user took it out.
 
-**Time boxes.** Every agent's brief carries one: a reviewer 30 minutes, a builder 60, the validator 60. Past it, a reviewer reports what it has verified and marks the rest unverified rather than building a bigger proof; a builder reports `blocked` with what it tried. An agent well past its box is checked and stopped (*A worker that has gone quiet*); waiting on a silent agent is the costliest thing the orchestrator can do.
+**Time boxes.** Every agent's brief carries one: a builder 60 minutes, a per-task reviewer 30, the epic review 45, the validator 60. Past it, a reviewer reports what it has verified and marks the rest unverified rather than building a bigger proof; a builder reports `blocked` with what it tried. An agent well past its box is checked and stopped (*A worker that has gone quiet*); waiting on a silent agent is the costliest thing the orchestrator can do.
 
 ## What a run works on
 
@@ -43,7 +53,7 @@ Stop and tell the user if any of these fails; a run started on a bad footing was
 - You know how each module this run touches will be tested: it has a row in the profile's Test map that you could follow now (how to exercise it, where its state lives, how to read that back, with what access). Fill a missing row from the code if you can. If you cannot, or a row's access does not work when you try it, ask the user now, in one message with your best guess for each, before the first builder is spawned.
 - Prerequisites are settled: every row in the `## Prerequisites` table (in the requirements, or in a pass's `intake.md`) is `provided` (and verified), or sits behind a `factory:needs-user` gate, or is marked for the next pass. If you can see a need the table missed (the tasks mention a service nobody has credentials for), ask the user now, in one batch, before any agent starts.
 
-Record the start: `bd update <epic> --claim --set-metadata validate_rounds=0`.
+Record the start: `bd update <epic> --claim --set-metadata validate_rounds=0 --set-metadata claimed_at=$(date -u +%FT%TZ)`, then `koujou budget <epic>` and put its line in the message telling the user the run has started.
 
 Keep the machine awake for the whole run: `koujou awake start` (and `koujou awake stop` after the report). A run outlasts the machine's idle timer, and a sleeping laptop stalls every agent and makes timed waits fail for reasons that have nothing to do with the code: on shukka v1 a lid closed for four hours turned two acceptance cases red and a gate's waits into timeouts. On battery a closed lid still sleeps the machine; when `koujou awake` says so, tell the user to plug in or keep the lid open.
 
@@ -55,14 +65,14 @@ Beads stamps `started_at` when an issue is first claimed and `closed_at` when it
 now() { date -u +%FT%TZ; }
 bd update <task> --claim --set-metadata claimed_at=$(now)   # when this run takes the task (beads' own started_at may be an older claim)
 bd update <task> --set-metadata built_at=$(now)        # the builder reported done (overwrite on a retry)
-bd update <task> --set-metadata reviewed_at=$(now)     # the review passed
+bd update <task> --set-metadata reviewed_at=$(now)     # your check (or its reviewer) passed
 bd update <task> --set-metadata merged_at=$(now)       # it landed on the epic branch
-koujou spawned <task>                                  # each time you spawn an agent for it: builder, reviewer, re-run
+koujou spawned <task>                                  # each time you spawn an agent for it: builder, reviewer, re-run; exit 3 = over budget
 koujou spawned <epic>                                  # each agent no single task owns: scouts, the validator
 bd update <epic> --set-metadata validated_at=$(now)    # the last validation passed
 ```
 
-Count with `koujou spawned`, never by setting the number: on the second real project the count was kept by hand and was wrong by a third, because the epic-level agents were never written anywhere, and the budget in `koujou converge` reads the same numbers. `koujou times <epic-id>` (or `koujou times --label factory:pass-<n>`) prints the result per task and in total. Put its output in the report.
+Count with `koujou spawned` before every spawn, never by setting the number. Continuing an agent that is still alive (SendMessage to a builder you sent back) is not a spawn; starting a fresh one in its place is. When it exits 3, the agent you were about to start waits for the user's answer; it is already counted, so don't count it again when they raise the budget: on the second real project the count was kept by hand and was wrong by a third, because the epic-level agents were never written anywhere, and the budget in `koujou converge` reads the same numbers. `koujou times <epic-id>` (or `koujou times --label factory:pass-<n>`) prints the result per task and in total. Put its output in the report.
 
 ## 1. Build waves
 
@@ -81,7 +91,7 @@ git worktree add <worktree-root>/<task> -b factory-task/<task> factory/<epic>
 
 `<worktree-root>` comes from the profile; default `../.factory-worktrees/<repo-name>`, outside the repo so the project's own tooling does not scan it.
 
-The epic's QA task (label `qa`) is part of the first wave: it goes to a `factory-tester`, not a builder, with the requirements file and the profile's QA section in its brief. Its branch is reviewed and merged like any other. The suite describes the finished epic, so it stays red on the epic branch until the tasks it covers, usually ending with the wiring task, are merged: run the unit gate after each merge, and the full gate including the suite once they are all in. A suite test that still fails then is a bug to triage (step 4) before validation even starts. Where the project runs every test with one command, so the suite cannot be kept out of the gate, hold the QA branch in the merge queue after its review passes and land it last, after the tasks it covers: landed earlier, it turns the epic gate red for every branch behind it.
+The epic's QA task (label `qa`) is part of the first wave: it goes to a `factory-tester`, not a builder, with the requirements file and the profile's QA section in its brief. Its branch is checked and merged like any other. The suite describes the finished epic, so it stays red on the epic branch until the tasks it covers, usually ending with the wiring task, are merged: run the unit gate after each merge, and the full gate including the suite once they are all in. A suite test that still fails then is a bug to triage (step 4) before validation even starts. Where the project runs every test with one command, so the suite cannot be kept out of the gate, hold the QA branch in the merge queue after its review passes and land it last, after the tasks it covers: landed earlier, it turns the epic gate red for every branch behind it.
 
 **c. Spawn the builders, all in one message** so they run in parallel. Each brief contains: the task id; the absolute worktree path and branch, with an instruction to work only there whatever directory its environment reports; the path to `FACTORY.md`; the path to the swarm protocol; one line per sibling in this wave (id, title, lane) so the builder knows who is nearby; a distinct port or database suffix if the project runs local services; a scratch folder of its own for throwaway scripts (workers share the machine's temp space, and one worker's `seed.ts` has overwritten another's); and on a retry, the reviewer's findings verbatim. Do not paste the task text; the builder reads it from beads. Count the spawn: `koujou spawned <task>`.
 
@@ -89,15 +99,16 @@ The epic's QA task (label `qa`) is part of the first wave: it goes to a `factory
 
 - `blocked` → see *Stuck* below.
 - `needs_user` is not empty → see *Waiting on the user* below. This can accompany `done`: the builder finished against a stand-in.
-- `done` → stamp `built_at`, then spawn a `factory-reviewer` for that task with: task id, worktree path, branch, the diff command `git diff factory/<epic>...HEAD` (three dots, so it compares from where the branch was cut even after the epic branch has moved on), path to `FACTORY.md` and the requirements file. Give it the code, not the builder's report; it should form its own view. Every reviewer gets a scratch folder of its own in the brief, as builders do, and is told not to use any shared temp directory (two reviewers sharing the session's scratch directory overwrote each other's copy of the app mid-review). Add one line per sibling task in the same epic or pass (id and title): a defect one task is fixing in one place is often being introduced afresh by another (on the lab's pass 1, one task fixed a double-click that created two links while another added a Delete button with the same flaw, which only the validator caught). One exception to giving it only the code: if the builder rebased over landed siblings and resolved conflicts, name the conflicted files and the sibling tasks, so the reviewer also checks that the siblings' behaviour and tests survived there.
+- `done` → stamp `built_at`, then **check it yourself**: in its worktree run `koujou accept <task>` (it must name the task's tests and pass) and the gate, and read `git diff factory/<epic>...HEAD` against each acceptance criterion. Every criterion met with a real test and the gate green → stamp `reviewed_at` and put it in the merge queue. A criterion not met, or a test that would pass without the change → send it back with what is missing (a fix attempt, as under *e*). File the builder's `discovered` items as beads.
+- `done` on a task labelled `security` or `review`, or one whose diff left you in doubt → also spawn a `factory-reviewer` for that task with: task id, worktree path, branch, the diff command `git diff factory/<epic>...HEAD` (three dots, so it compares from where the branch was cut even after the epic branch has moved on), path to `FACTORY.md` and the requirements file. Give it the code, not the builder's report; it should form its own view. Every reviewer gets a scratch folder of its own in the brief, as builders do, and is told not to use any shared temp directory (two reviewers sharing the session's scratch directory overwrote each other's copy of the app mid-review). Add one line per sibling task in the same epic or pass (id and title): a defect one task is fixing in one place is often being introduced afresh by another (on the lab's pass 1, one task fixed a double-click that created two links while another added a Delete button with the same flaw, which only the validator caught). One exception to giving it only the code: if the builder rebased over landed siblings and resolved conflicts, name the conflicted files and the sibling tasks, so the reviewer also checks that the siblings' behaviour and tests survived there.
 
-**e. On the reviewer's verdict.**
+**e. On a reviewer's verdict** (tasks that had one).
 
 - **A second or later review is bounded.** Its brief lists what was sent back and asks whether each item is closed and whether the fix broke anything already verified. A new finding that breaks an acceptance criterion or harms users is still blocking; any other new finding goes under `follow_ups` and becomes its own bead. Never brief a builder or a reviewer to "sweep the whole class": that has no end, and on the first real pass it drove one task to its attempt cap over findings that were not in its criteria.
 - **fail** → read `fix_attempts` from `bd show <task> --json`, add one, `bd update <task> --set-metadata fix_attempts=<n> --append-notes "review <n>: <one-line summary>"`. If `n` is below the cap, continue the same builder with the blocking findings (its context is still useful) or spawn a fresh one in the same worktree if it has gone in circles. Then review again. At the cap → *Stuck*, unless the only findings left are ones that break no acceptance criterion and harm no user (low-severity, or already present before the task): then file them as their own beads, land the task, and record in its notes and in the report that you set the reviewer's verdict aside and why. That is a judgement to use rarely and always in the open.
 - **pass** → read the reviewer's suggestions before merging. A reviewer sometimes files a real defect as a suggestion because it could not reproduce it locally (behaviour that differs in production: consistency, limits, concurrency, scale). If a suggestion describes wrong behaviour for real users, send the task back as if it had failed; otherwise stamp `reviewed_at` and put the branch in the merge queue. File the reviewer's `follow_ups` and the builder's `discovered` items as beads (see *Triage*).
 
-**f. The merge queue: one branch lands at a time, the rest rebase.** Parallel branches are cut at different moments, so by the time a branch is ready the epic branch has usually moved. Land branches in the order their reviews passed:
+**f. The merge queue: one branch lands at a time, the rest rebase.** Parallel branches are cut at different moments, so by the time a branch is ready the epic branch has usually moved. Land branches in the order their checks passed:
 
 ```bash
 cd <worktree-root>/<task> && git rebase factory/<epic>      # bring the branch onto the current epic branch
@@ -106,7 +117,7 @@ cd <epic worktree> && git merge --no-ff factory-task/<task> # now a fast, confli
 ```
 
 - **The rebase is clean** → run the gate on the rebased branch, then the task's own acceptance tests (`koujou accept <task>`, in its worktree). Both green → merge, stamp `merged_at`. Red → the branch and something that landed before it disagree without touching the same lines; send it back to its builder with the failing output and the commits that landed since it was cut. That is a fix attempt.
-- **The rebase conflicts** → `git rebase --abort` and send the branch back to its builder: "rebase onto `factory/<epic>` (now at `<sha>`), resolve the conflicts keeping both changes' behaviour, run the gate". List the commits that landed and their tasks, so the builder can read what the other side intended and ask its author through the mailbox. When it reports back, a reviewer checks the resolution only (`git range-diff`, or the diff of the conflicted files against both parents) and that both tasks' criteria still hold in those files. Then it re-enters the queue at the front. Count it in `rebases` (metadata), not `fix_attempts`: a conflict is the plan's fault, not the builder's. At `max_rebases` → *Stuck*.
+- **The rebase conflicts** → `git rebase --abort` and send the branch back to its builder: "rebase onto `factory/<epic>` (now at `<sha>`), resolve the conflicts keeping both changes' behaviour, run the gate". List the commits that landed and their tasks, so the builder can read what the other side intended and ask its author through the mailbox. When it reports back, you check the resolution (a reviewer only for a task that has one) (`git range-diff`, or the diff of the conflicted files against both parents) and that both tasks' criteria still hold in those files. Then it re-enters the queue at the front. Count it in `rebases` (metadata), not `fix_attempts`: a conflict is the plan's fault, not the builder's. At `max_rebases` → *Stuck*.
 - **After every landing, tell the builders still in flight**: post to each one's mailbox `[from orchestrator] factory/<epic> is now at <sha>: <task> landed, touching <files>`. A builder rebases its own branch onto the epic branch before it reports done (the builder role allows exactly this rebase), so most conflicts are resolved by the agent that understands the change, before review, and the queue stays short.
 - Never resolve a product-code conflict yourself. You may resolve mechanical ones in files nobody owns (a lockfile regenerated by the install command, two lines appended to the same list), and you say so in the task's notes.
 - A conflict is evidence that two lanes overlapped. Note which files for the retro, and before starting the next wave check the lanes of what is still in flight against what just landed.
@@ -116,7 +127,7 @@ After a clean landing the epic branch has been gated with that task in it, so a 
 **g. Close** each merged task once the epic-branch gate is green:
 
 ```bash
-bd close <task> --reason "<what shipped> | evidence: acceptance tests pass (`<accept command>`), reviewer verified N/N criteria, gate green at <sha> | residue: <follow-up ids or none>"
+bd close <task> --reason "<what shipped> | evidence: acceptance tests pass (`<accept command>`), N/N criteria checked (orchestrator, or reviewer), gate green at <sha> | residue: <follow-up ids or none>"
 git worktree remove --force <worktree-root>/<task> && git branch -d factory-task/<task>   # --force: untracked build output is expected; the branch is already merged
 ```
 
@@ -124,9 +135,11 @@ Closing unblocks dependents, which form the next wave. If the project pushes the
 
 When the tracker is shared with people and the work only becomes real for them once the user merges the branch (the profile's integration is a pull request the user merges), don't close issues that are not on the base branch yet. Leave each in progress with the label `factory:awaiting-merge` and notes saying what was built and reviewed; tell the user to close them on merge. Make beads writes with `--sandbox` so nothing reaches the team's tracker until the user pushes it. Within the run, treat `factory:awaiting-merge` as done when deciding what is ready. `bd ready` cannot see that: a task left in progress still blocks its dependents there, and it shows nothing after the first wave. Use `koujou ready <epic>` (or `--label factory:pass-<n>`) wherever this skill says `bd ready`: it counts a task as finished when it is closed or carries the label. `koujou converge` reads the label the same way. And `git branch -d` refuses a task branch in this set-up, because it is merged into the epic branch, not into the checkout's own branch: check with `git merge-base --is-ancestor factory-task/<task> factory/<epic>`, then `git branch -D`.
 
+**h. One review of the assembled branch.** When the waves run dry, spawn one `factory-reviewer` (time box 45 minutes) on the whole epic: `git diff <base>...factory/<epic>`, the requirements, every task's id and criteria, `FACTORY.md`, a scratch folder of its own. It looks for what per-task checks miss: two tasks that disagree, a criterion nobody tested for real, an obvious defect for users. Fix its blocking findings in one batch (one builder, or yourself if small), check the fix as in *d*, and go on; its other findings become beads. Do not send the branch back for a second full review: a re-check covers only the findings. This review runs once per epic: fix rounds after validation get your check (*d*) only, and a resumed epic that has had it does not repeat it.
+
 ### Small fixes go small
 
-A fix of a few lines with an obvious cause (a config value, a missing permission whose name the error gives, a typo in a test script) does not need the full builder-and-reviewer round when something is waiting on it: the orchestrator may make it or have a builder make it, reads the diff itself, runs the gate and the task's test, and says so in the close reason. Anything touching behaviour users see, security boundaries in a non-obvious way, or more than one file's logic still gets an independent reviewer. On shukka v1 several one-line fixes each took a full round while a release waited.
+A fix of a few lines with an obvious cause (a config value, a missing permission whose name the error gives, a typo in a test script) does not need an agent at all: make it yourself, read the diff, run the gate and the task's test, and say so in the close reason. Anything larger goes to a builder, checked as in *d*. On shukka v1 several one-line fixes each took a full builder-and-reviewer round while a release waited.
 
 ### Each slow run must find everything it can
 
@@ -184,7 +197,7 @@ Commands are in the beads reference. Every bug filed here, deferred ones as much
 
 ### The fix loop
 
-Fix-now bugs go back to step 1 as ready tasks; then rebuild, restart and validate again. From the second round on the validator re-runs the fixed bugs' steps, whatever those fixes touched, and the epic's success criteria, not everything.
+Fix-now bugs go back to step 1 as ready tasks, all of a round's bugs at once (one builder may take several in the same lane; a few-line fix with a known cause you make yourself, as in *Small fixes go small*); then rebuild, restart and validate again. From the second round on the validator re-runs the fixed bugs' steps, whatever those fixes touched, and the epic's success criteria, not everything.
 
 **Bugs stack.** A builder sent to fix a bug sometimes finds that it cannot be fixed where it shows: the cause is a deeper defect, in another lane or larger than the bug. It reports `status: blocked` with `blocked_by`. File that defect as its own `bug` bead, child of the epic, and put it underneath the first: `bd dep add <bug> <deeper bug>`. The first bug leaves `bd ready`; the deeper one is built, reviewed and landed; closing it brings the first back to the top, and its builder continues. The same holds one level further down. Nothing here needs a counter: the dependency graph is the stack, and `bd ready` is its top.
 
@@ -201,7 +214,7 @@ It reads the run from beads and prints what to do:
 | `continue` | Bugs are closing: fewer are open than a round ago, or this is an early round | Next wave. |
 | `stuck <bug>` | That bug's fix has failed validation twice (`reopened`), or fixing it has uncovered a chain of bugs deeper than `max_fix_depth` | Mark that bug stuck (*Stuck*, above) with the chain in its notes. Everything else carries on. |
 | `stop: no progress` | Two rounds running have not brought the number of open fix-now bugs down | Stop the loop. |
-| `stop: budget` | The run has used more agents than `max_agent_runs` (default: twelve per planned task, at least thirty) | Stop the loop. |
+| `stop: budget` | The run has used more agents than its budget (`koujou budget`: `max_agent_runs`, the epic's `agent_budget`, or three per planned task, at least ten) | Stop the loop and ask the user. |
 | `stop: every open bug is stuck` | Nothing is left that can be built | Report as partially delivered. |
 
 On a `stop`, the loop is not converging, which usually means a requirement or design problem that more fixing will not solve. Gate the epic (`bd gate create --blocks <epic> --reason ...`) and bring the user the pattern you see in the failures: which criterion keeps failing, what each fix changed, and what you think is actually wrong. The budget is a backstop against a loop the other signs missed; if the run is plainly converging when it trips, say so and ask for more rather than treating it as a failure.
@@ -212,7 +225,7 @@ Only when every child is closed (or `factory:awaiting-merge`) and the last valid
 
 - Update the System design in `AGENTS.md` to match what is now built (`~/.claude/skills/factory/reference/agents-template.md`): the sections this epic changed, the commit stamp, and the epic removed from "In progress". Commit it on the epic branch so the design and the code land together.
 - Update the other docs the profile requires in the same change (roadmap, decision log, pitfalls learned during the run).
-- Write `report.md` in the work order: what shipped by requirement; evidence (gate result, validator verdict, commit, evidence files); time (the output of `koujou times`: per task, build, review and queue time, attempts, agents; and the run's total); **waiting on you** (open `factory:needs-user` items: what is needed, where to put it, what it unblocks); deferred items with ids; stuck items; rounds used; anything built against a fake; anything not verified.
+- Write `report.md` in the work order: what shipped by requirement; evidence (gate result, validator verdict, commit, evidence files); time (the output of `koujou times` and `koujou budget`: per task, build, review and queue time, attempts, agents; the run's total against its budget); **waiting on you** (open `factory:needs-user` items: what is needed, where to put it, what it unblocks); deferred items with ids; stuck items; rounds used; anything built against a fake; anything not verified.
 - `koujou awake stop`.
 - Clean up what the run created on the machine: task worktrees and branches, servers you started, and test databases or tables made for the run. Scratch folders too, and during the run, not only at the end: reviewers who build a copy of the project to mutate it leave a gigabyte each, and fourteen tasks left six. Leave the epic branch and its worktree: shipping needs them.
 - Run `factory-ship`: it pushes the branch, opens the pull request, waits for CI, merges with the user's approval, checks the deploy, and closes the issues and the epic. How far it goes without asking is the profile's git policy. Where there is no remote and the profile lets the factory merge locally, it does that and closes the epic: `bd close <epic> --reason "<summary> | evidence: validator pass at <sha> | residue: <deferred ids>"`.

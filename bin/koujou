@@ -6,6 +6,7 @@
 #   koujou times <epic-id> | --label <label>   where a run's time went, read from beads
 #   koujou ready <epic-id> | --label <label>   tasks that can start now (landed tasks awaiting merge count as done)
 #   koujou spawned <id>...   count one agent run against a task, or against the epic for agents no task owns
+#   koujou budget <epic-id> | --label <label>   is the run inside its budget of agents and time? (spawned checks it too)
 #   koujou converge <epic-id> | --label <label> [--record]   may the fix loop go on? answered from the run's record
 #   koujou wait <epic-id> start|end   time a run spends stopped, waiting on you
 #   koujou awake start|stop|status   keep this machine from sleeping while a run lasts (macOS caffeinate, Linux systemd-inhibit)
@@ -134,6 +135,12 @@ cmd_spawned() { # count an agent run
   python3 "$SRC/bin/koujou-spawned.py" "$@"
 }
 
+cmd_budget() { # is the run inside its budget of agents and time? (exit 1 = over)
+  command -v bd >/dev/null 2>&1 || { say "bd (beads) is not installed."; exit 1; }
+  command -v python3 >/dev/null 2>&1 || { say "koujou budget needs python3."; exit 1; }
+  python3 "$SRC/bin/koujou-budget.py" "$@"
+}
+
 cmd_wait() { # time a run spends stopped, waiting on the user
   command -v bd >/dev/null 2>&1 || { say "bd (beads) is not installed."; exit 1; }
   command -v python3 >/dev/null 2>&1 || { say "koujou wait needs python3."; exit 1; }
@@ -206,8 +213,9 @@ case "${1:-}" in
   ready) shift; cmd_ready "$@";;
   spawned) shift; cmd_spawned "$@";;
   converge) shift; cmd_converge "$@";;
+  budget) shift; cmd_budget "$@";;
   update) cmd_update;;
   link) cmd_link;;
   uninstall) cmd_uninstall;;
-  *) sed -n '2,13p' "$self" | sed 's/^# \{0,1\}//';;
+  *) sed -n '2,14p' "$self" | sed 's/^# \{0,1\}//';;
 esac

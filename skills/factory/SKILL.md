@@ -69,19 +69,20 @@ If the project already has homes for these (a `REQUIREMENTS.md`, a specs folder,
 |---|---|---|---|
 | Orchestrator | This session | Merges only | Yes — the only writer |
 | `factory-builder` | Subagent, one per task, in its own worktree | Yes | No |
-| `factory-reviewer` | Subagent, fresh context per review | No | No |
+| `factory-reviewer` | Subagent, fresh context: one review of each epic's assembled branch, plus per-task reviews for tasks labelled `security` or `review` | No | No |
 | `factory-security` | Subagents, several at once, each reading a change through one lens (access, input, exposure); only in `factory-security-review`, on demand | No | No |
-| `factory-tester` (QA) | Subagent, writes the automated acceptance suite from the requirements, in its own worktree | Tests only | No |
+| `factory-tester` (QA) | Subagent, only when the plan has a `qa` task (lane L, flows across slices): writes the acceptance suite from the requirements | Tests only | No |
 | `factory-validator` (QA) | Subagent, black-box against the running product, in a real browser for UIs | No | No |
 
 Two rules carry most of the weight:
 
-- **Nobody grades their own work.** The builder never declares a task done; an independent reviewer does, against the acceptance criteria written before the code existed.
+- **Nobody grades their own work.** The builder never declares a task done; the orchestrator does, by running the task's acceptance command and the gate and reading the diff against criteria written before the code existed, and one independent reviewer reads the assembled epic.
+- **Lean, inside a budget.** The factory must beat the user working by hand with one agent, or it has no reason to exist. Few builders, few larger tasks, no agent whose report would not change anything; every run has a budget of agents and time that `koujou spawned` enforces, and the retro compares each run against doing it by hand.
 - **One writer for beads.** Subagents report; the orchestrator records. This keeps state honest and avoids races between parallel builders.
 
 Three more hold the rest together:
 
-- **QA is independent of the builders.** The tester writes acceptance tests from the requirements without reading the implementation; the validator uses the running product, then reads back what it stored (the database, the cloud account, GitHub) wherever the factory has read access. How each module is tested is worked out from the project and kept in the profile's Test map; the user is asked only about what could not be inferred, before work starts. Details in the agent files.
+- **QA is independent of the builders.** The validator uses the running product, then reads back what it stored (the database, the cloud account, GitHub) wherever the factory has read access. How each module is tested is worked out from the project and kept in the profile's Test map; the user is asked only about what could not be inferred, before work starts. Details in the agent files.
 - **Ask the user once, early.** Everything only the user can provide (keys, accounts, access, decisions, assets) is swept for at the requirements and design gates and asked for in one batch. What they cannot provide now is built against a fake or moved to the next pass; what surfaces mid-run bubbles up through a `factory:needs-user` gate while other work continues. Protocol: `~/.claude/skills/factory/reference/blockers.md`.
 - **The system design stays current.** `AGENTS.md` holds a short, as-built description of the system: components, data model, flows, interfaces, external dependencies. It is rewritten where needed in the same change that alters the system, so every agent starts from the real architecture. Format: `~/.claude/skills/factory/reference/agents-template.md`.
 - **Every run teaches the factory.** `factory-retro` ends each epic by turning the run's evidence into changes to the project profile, the factory's skills, and the workers' instructions.
