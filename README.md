@@ -71,6 +71,7 @@ koujou update
 ## 🛠 Features
 
 * **Idea to shipped:** requirements, system design, epics and tasks, build, review, QA, deploy, validation, bug triage.
+* **Direct lane for live work:** deploys, migrations, recoveries and few-line fixes are done by the session itself, end to end, with no factory stages, because an agent would mostly wait on the live system.
 * **Lean, inside a budget:** a few builders (three at most) on a few larger tasks, each in its own git worktree. Every run gets a budget of agents and working time (by default three agents and an hour per task); `koujou spawned` checks it on every agent and stops the run to ask you before going over. The factory has to beat you working by hand with one agent, and every retro says whether it did.
 * **Merge queue:** finished branches land one at a time; the others rebase onto the result, and the agent that wrote a change resolves its own conflicts.
 * **Security team, on demand:** `/factory-security-review` sends several agents to read a branch or pull request, each through one lens: access, untrusted input, data exposure, each time-boxed. It is not part of the delivery loop (it made runs several times slower); findings come back as beads and you decide what to fix now. Security closes holes without changing what your product does: a fix that would remove or restrict a feature is allowed only for serious harm (data, accounts, money, trust), and then you decide.
@@ -97,10 +98,13 @@ In your terminal:
 | `koujou init` | Wire the current project: beads, `FACTORY.md`, `AGENTS.md`, `CLAUDE.md`. |
 | `koujou doctor` | Check the installation and the current project. |
 | `koujou accept <task-id>` | Run a task's acceptance tests (or `--parent <epic-id>` for all of an epic's). |
+| `koujou accept --red <task> --base <ref>` | Prove the task's tests fail without its change (code taken back, tests kept). Replaces the per-task reviewer's hollow-test check. |
 | `koujou times <epic-id>` | Time per task (build, review, queue), bounces, rebases and agents used. |
 | `koujou ready <epic-id>` | The tasks of a run that can start now. Like `bd ready`, but a task that has landed and stays open until you merge counts as done, so the next wave shows up. Also lists what is in flight and for how long, and flags a worker that has been quiet far longer than any build so far. |
+| `koujou status [<epic-id>]` | One screen: runs in progress, tasks, budget, live agents and any past their time box, what waits on you, what is stuck, leftover processes in task worktrees. |
+| `koujou reported <id> --role <role>` | That agent has reported; it is no longer live (`--all` for every agent on the issue). `koujou spawned <id> --role <role> --resumed` marks a continued agent live again without counting it. |
 | `koujou budget <epic-id>` | The run's agents and working hours against its budget; exits 1 when over. |
-| `koujou spawned <id>...` | Count one agent run against a task, or against the epic for agents no single task owns (scouts, the validator), so `koujou times` and the run's budget see every agent; checks the budget and exits 3 when the run is over it. |
+| `koujou spawned <id>... [--role <role>]` | Count one agent run against a task, or against the epic for agents no single task owns (scouts, the validator), so `koujou times` and the run's budget see every agent; checks the budget and exits 3 when the run is over it. |
 | `koujou converge <epic-id>` | After a validation round: may the fix loop go on? Says continue, which bug is stuck, or stop, from the run's record. |
 | `koujou wait <epic-id> start\|end` | Mark when a run stops to wait for you and when it resumes, so `koujou times` reports waiting apart from work. |
 | `koujou awake start\|stop\|status` | Keep the machine from sleeping while a run lasts (`caffeinate` on macOS, `systemd-inhibit` on Linux). The delivery loop starts it for you. |

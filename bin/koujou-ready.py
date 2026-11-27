@@ -74,6 +74,19 @@ def main(args):
               + (f"  QUIET: over three times the slowest build so far ({int(max(builds) // 60)}m). Is its agent alive?"
                  if quiet else ""), file=sys.stderr)
 
+    # Every agent spawned with --role, whatever its kind (reviewer, epic review, validator), against its time box.
+    import importlib.util, pathlib
+    spec = importlib.util.spec_from_file_location("spawned", pathlib.Path(__file__).with_name("koujou-spawned.py"))
+    sp = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(sp)
+    holder = bd("show", args[0]) if args[0] != "--label" else []
+    for d in list(issues.values()) + holder:
+        for role, t in sp.live_agents(d.get("metadata") or {}):
+            mins = (now - t).total_seconds() / 60
+            if mins > sp.BOX.get(role, 60):
+                print(f"  {d['id']} {role} live for {int(mins)}m  OVER BOX ({sp.BOX.get(role, 60)}m): is it alive? stop and replace it",
+                      file=sys.stderr)
+
 
 if __name__ == "__main__":
     main(sys.argv[1:])

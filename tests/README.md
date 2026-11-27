@@ -87,6 +87,7 @@ Compare a demo run's `koujou times` with the last one recorded here; a change th
 | 2026-11-21 | 20 of 20 checks | 4 | 12 | 10 m 42 s | 0 | 0 |
 | 2026-11-22 | 20 of 20 checks, after one fix (deferred bugs filed without reproduction steps failed `bd lint`) | 5 (4 planned, 1 security fix) | 15 | 13 m 57 s | 0 | 0 |
 | 2026-11-26, lean | 23 of 23 checks (two added: inside the budget, retro Speed table) | 2 | 4 (2 builders, epic review, validator) | 7 m 14 s | 0 | 0 |
+| 2026-11-27, with `accept --red` and `--role` | 23 of 23 checks; `--red` red on both tasks | 2 | 4 | 12 m 56 s | 0 | 1 |
 
 `demo-fix-loop`:
 

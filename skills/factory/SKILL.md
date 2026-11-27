@@ -35,11 +35,14 @@ Ceremony should match risk. Pick the smallest lane that fits and tell the user w
 
 | Lane | Fits | Stages |
 |---|---|---|
+| **Direct** | Work whose time goes to live cycles, not to writing code: a deploy or migration, recovering a stuck stack, debugging production, a switch-over. Also a few-line change you can make and verify in minutes | No factory stages. This session does it itself, end to end without stopping: change, run live, read the result, fix, repeat. A bead records it, with what was done and the evidence in its close reason. Code changes still go through the project's gate and its integration (pull request) |
 | **S** | A bug, or a change with one obvious implementation, touching one area | One bead with acceptance criteria → `factory-run` on that bead |
 | **Check** | "Test the billing module", "is sign-in still working": one module examined as it stands, nothing to build | One `factory-validator` on the running product, briefed with the module's Test map row and, as criteria, what the System design and any requirements say the module does. Bugs it finds become `factory:deferred` beads; fixing them is a pass |
 | **Pass** | Several existing backlog issues, possibly from different epics | `factory-plan` intake (scout, ask once) → `factory-run --label factory:pass-<n>` |
 | **M** | A feature in existing architecture; a few tasks; no new components, data stores or external services | `factory-spec` → `factory-plan` (design notes go in the epic's design field) → `factory-run` |
 | **L** | New product, new subsystem, a new data model or integration, or anything expensive to undo | `factory-spec` → `factory-design` → `factory-plan` → `factory-run` |
+
+Pick **Direct** over the factory whenever an agent would mostly wait on a live system: on the shukka and Orbitary switch-overs, every production defect was a one-line fix behind a 10–20 minute deploy, and routing each through a builder added an agent's start-up and a context rebuilt from nothing to every cycle. The session doing it directly was several times faster.
 
 If you find mid-flight that the lane was too small (a "small" change needs a schema decision), stop and step up a lane instead of improvising the missing stage.
 
@@ -100,4 +103,4 @@ Full detail and command recipes are in `~/.claude/skills/factory/reference/beads
 
 ## Status
 
-When asked where things stand: `bd epic status`, `bd ready`, `bd blocked`, `bd list --label factory:stuck`, `bd list --label factory:needs-user --status open`, `bd gate list`, plus the `status:` line of the work order's artifacts. Report the stage, what is waiting on the user, and what is stuck.
+When asked where things stand: `koujou status` (every run in progress with its tasks and budget, live agents and any past their time box, what waits on the user, what is stuck, processes left in task worktrees, whether the machine is kept awake), plus the `status:` line of the work order's artifacts. Report the stage, what is waiting on the user, and what is stuck.

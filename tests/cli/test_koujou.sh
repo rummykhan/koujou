@@ -177,4 +177,48 @@ bd update $epic --set-metadata time_budget_h=0.5 >/dev/null
 check "a fractional time budget is kept" bash -c '"$0" budget "$1" | grep -q "budget 0.5h\|of 0.5h"' "$K" $epic
 check "converge on an unknown id is an error" bash -c '! "$0" converge td-nope' "$K"
 
+echo "  koujou spawned --role / reported / status"
+bd update $epic --set-metadata agent_budget=100 --set-metadata time_budget_h=100 >/dev/null
+r1=$(bd create "role task" -t task --parent $epic -d d --acceptance "- x" --silent)
+check "spawned --role marks the agent live" bash -c '"$0" spawned "$1" --role reviewer >/dev/null; bd show "$1" --json | grep -q "agent_live.*reviewer@"' "$K" $r1
+check "an unknown role is an error" bash -c '! "$0" spawned "$1" --role wizard 2>/dev/null' "$K" $r1
+check "status lists the live agent" bash -c '"$0" status "$1" | grep -q "agent  $2 reviewer for"' "$K" $epic $r1
+old=$(python3 -c "from datetime import datetime, timedelta, timezone; print((datetime.now(timezone.utc)-timedelta(minutes=45)).strftime('%Y-%m-%dT%H:%M:%SZ'))")
+bd update $r1 --set-metadata agent_live=reviewer@$old >/dev/null
+check "a reviewer past its 30-minute box is flagged in status" bash -c '"$0" status "$1" | grep -q "$2 reviewer for 45m  OVER BOX (30m)"' "$K" $epic $r1
+check "…and in ready" bash -c '"$0" ready "$1" 2>&1 | grep -q "$2 reviewer live for 45m  OVER BOX"' "$K" $epic $r1
+check "reported takes it off the live list" bash -c '"$0" reported "$1" --role reviewer >/dev/null; ! "$0" status "$2" | grep -q "agent  $1"' "$K" $r1 $epic
+bd update $r1 --set-metadata agent_live=builder@$old --set-metadata built_at=$(date -u +%FT%TZ) >/dev/null
+check "reported with neither --role nor --all is a usage error" bash -c '! "$0" reported "$1" 2>/dev/null && ! "$0" reported 2>/dev/null' "$K" $r1
+check "spawned --resumed marks the agent live without counting a run" bash -c 'n=$(bd show "$1" --json | python3 -c "import json,sys; print(json.load(sys.stdin)[0][\"metadata\"][\"agent_runs\"])"); "$0" spawned "$1" --role builder --resumed >/dev/null; m=$(bd show "$1" --json | python3 -c "import json,sys; print(json.load(sys.stdin)[0][\"metadata\"][\"agent_runs\"])"); [ "$n" = "$m" ] && "$0" status "$2" | grep -q "agent  $1 builder"' "$K" $r1 $epic
+"$K" reported $r1 --all >/dev/null
+check "status --label with no label is a usage error" bash -c '"$0" status --label 2>&1 | grep -q "^usage"' "$K"
+check "a builder whose built_at is stamped is not live, without reported" bash -c '! "$0" status "$2" | grep -q "agent  $1"' "$K" $r1 $epic
+check "status shows what waits on the user and the machine" bash -c 'o=$("$0" status); echo "$o" | grep -q "^waiting on you:" && echo "$o" | grep -q "^machine:"' "$K"
+
+echo "  koujou accept --red"
+R="$WORK/red"; mkdir -p "$R/test" && cd "$R" && git init -q -b main
+bd init --non-interactive --prefix rd >/dev/null 2>&1
+printf '{"type":"module"}' > package.json
+printf 'export const add = (a, b) => 0;\n' > math.js
+git add -A && git commit -qm base && git branch base
+redt=$(bd create "add adds" -t task -d d --acceptance "- x" --silent)
+bd update $redt --set-metadata accept="node --test --test-reporter=spec --test-name-pattern $redt test/*.test.js" >/dev/null
+git checkout -qb work
+printf 'export const add = (a, b) => a + b;\n' > math.js
+printf "import { test } from 'node:test'; import assert from 'node:assert'; import { add } from '../math.js';\ntest('$redt: add adds', () => assert.equal(add(2, 3), 5));\n" > test/math.test.js
+git add -A && git commit -qm change
+check "red: tests that fail without the change pass the check" bash -c '"$0" accept --red "$1" --base base | grep -q "^  red   $1"' "$K" $redt
+check "red: the branch is restored afterwards" bash -c 'grep -q "a + b" math.js && test -z "$(git status --porcelain)"'
+printf "import { test } from 'node:test'; import assert from 'node:assert';\ntest('$redt: add adds', () => assert.ok(true));\n" > test/math.test.js
+git commit -qam hollow
+check "red: a hollow test that passes without the change fails the check" bash -c '! "$0" accept --red "$1" --base base >/dev/null && "$0" accept --red "$1" --base base | grep -q "pass without the change"' "$K" $redt
+printf 'export const sub = (a, b) => a - b;\n' > extra.js && git add -A && git commit -qm added
+check "red: a file the branch added is removed for the check and restored after" bash -c '"$0" accept --red "$1" --base base >/dev/null; test -f extra.js && test -z "$(git status --porcelain)"' "$K" $redt
+echo dirty >> math.js
+check "red: refuses a dirty worktree" bash -c '! "$0" accept --red "$1" --base base 2>/dev/null' "$K" $redt
+git checkout -q -- math.js
+bd update $redt --set-metadata accept="node --test --test-name-pattern $redt no-such-dir/" >/dev/null
+check "red: a command that runs no test at all is not taken as red" bash -c '! "$0" accept --red "$1" --base base >/dev/null && "$0" accept --red "$1" --base base | grep -q "proves nothing"' "$K" $redt
+
 finish

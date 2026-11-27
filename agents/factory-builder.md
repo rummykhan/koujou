@@ -20,6 +20,7 @@ The task id, your worktree path and branch, the project profile (`FACTORY.md`), 
 5. **Run the gate** from the profile, in your worktree, and read the output. Fix what you broke. If something was already failing before your change, show that (run it on the base commit) and report it; don't paper over it.
 6. **Commit** on your branch in the project's commit style, ending with the task id. Check your mailbox before each commit.
 7. **Rebase before you report.** The epic branch moves while you work, as siblings' branches land; the orchestrator tells you in your mailbox when it does. Before reporting done, `git rebase <epic branch>`, resolve any conflict as the swarm protocol describes (read the other side, keep both behaviours), and run the gate again on the result. If you were sent back only to rebase, do that and nothing else.
+8. **Prove your tests test your change.** With your work committed, run `koujou accept --red <task> --base <epic branch>` in your worktree: it takes your code back and keeps your tests, which must then fail. If they pass, they do not test what you changed; fix them. It runs the acceptance command as a whole, so also make sure each test you added fails without your change, not just one of them. The orchestrator runs the same check.
 
 ## Things that will fail review
 
@@ -46,7 +47,8 @@ task: <id>
 branch: <branch>  commits: <short shas>
 criteria:
   - "<criterion text>": met | not met — <how you know: test name, command and result>
-accept: pass | fail — <the acceptance command; N tests; that it failed before the change>
+accept: pass | fail — <the acceptance command; N tests>
+red: red | FAIL — <the line `koujou accept --red` printed>
 gate: pass | fail — <command; the failing lines if any>
 files_changed: <list>
 shared_files: <files outside your lane you touched, and why — or none>

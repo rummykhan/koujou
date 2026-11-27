@@ -1,6 +1,11 @@
 #!/usr/bin/env python3
 """koujou accept <task-id>... | --parent <epic-id> | --label <label>
-Run each task's acceptance command (beads metadata `accept`) in the current directory and report pass or fail."""
+Run each task's acceptance command (beads metadata `accept`) in the current directory and report pass or fail.
+
+koujou accept --red <task-id> --base <ref>
+Prove the task's tests fail without its change: in the current worktree (clean), take the code back to <ref> while
+keeping the branch's test files, run the acceptance command, then restore the branch. It must FAIL; a pass means the
+tests do not test the change. This replaces the hollow-test check a per-task reviewer used to make."""
 import json
 import re
 import subprocess
@@ -18,7 +23,63 @@ def bd(*a):
     return json.loads(out.stdout or "[]")
 
 
+TESTISH = re.compile(r"(^|/)(tests?|__tests__|spec|e2e)/|[._-](test|spec)\.[a-z0-9]+$|_test\.[a-z]+$|(^|/)test_[^/]+$", re.I)
+
+
+def git(*a, check=True):
+    r = subprocess.run(["git", *a], capture_output=True, text=True)
+    if check and r.returncode != 0:
+        sys.exit(f"git {' '.join(a)}: {r.stderr.strip()}")
+    return r.stdout
+
+
+def red(args):
+    if len(args) != 3 or args[1] != "--base":
+        sys.exit("usage: koujou accept --red <task-id> --base <ref>")
+    i, base = args[0], args[2]
+    shown = bd("show", i)
+    if not shown:
+        sys.exit(f"no issue {i}")
+    cmd = (shown[0].get("metadata") or {}).get("accept")
+    if not cmd:
+        sys.exit(f"{i}: no acceptance command recorded")
+    if git("status", "--porcelain").strip():
+        sys.exit("the worktree has uncommitted changes; commit or stash them first")
+    fork = git("merge-base", "HEAD", base).strip()
+    changed = [f for f in git("diff", "--name-only", f"{fork}..HEAD").splitlines() if f]
+    code = [f for f in changed if not TESTISH.search(f)]
+    if not code:
+        sys.exit(f"{i}: the branch changes only test files; nothing to take back")
+    try:
+        # code files back to where the branch started; files the branch added are removed
+        existed = set(git("ls-tree", "-r", "--name-only", fork, "--", *code).splitlines())
+        if existed:
+            git("checkout", fork, "--", *sorted(existed))
+        for f in set(code) - existed:
+            git("rm", "-q", "--cached", "--", f, check=False)
+            try:
+                __import__("os").remove(f)
+            except OSError:
+                pass
+        r = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+    finally:
+        git("reset", "-q", "--hard", "HEAD")
+    out = (r.stdout + r.stderr).replace(cmd, "")
+    if r.returncode != 0 and not re.search(r"(?<![\w/.-])" + re.escape(i), out):
+        # a command that breaks before any test runs (a bad path, a missing tool) fails too, and proves nothing
+        print(f"  FAIL  {i}  without the change no test named with '{i}' ran, so the check proves nothing:")
+        print("\n".join("        " + line for line in out.strip().splitlines()[-10:]))
+        sys.exit(1)
+    if r.returncode == 0:
+        print(f"  FAIL  {i}  its tests pass without the change ({len(code)} code file(s) taken back to {fork[:8]}): "
+              "they do not test what the task changed")
+        sys.exit(1)
+    print(f"  red   {i}  its tests fail without the change, as they should ({len(code)} code file(s) taken back)")
+
+
 def main(args):
+    if args and args[0] == "--red":
+        return red(args[1:])
     if not args or (args[0] in ("--parent", "--label") and len(args) < 2):
         sys.exit("usage: koujou accept <task-id>... | --parent <epic-id> | --label <label>")
     if args[0] in ("--parent", "--label"):

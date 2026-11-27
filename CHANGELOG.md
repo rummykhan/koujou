@@ -2,6 +2,16 @@
 
 Changes the factory made to itself, each tied to the run that taught it. `factory-retro` appends here and checks earlier entries' expected effects against later runs.
 
+## 2026-11-27 — speed, accuracy and automation from the shukka/Orbitary session
+
+- **skills/factory (Sizing)**: a **Direct** lane for work whose time goes to live cycles (deploys, migrations, recoveries, few-line fixes): the session does it itself, no factory stages. Because every switch-over defect was a one-line fix behind a 10–20 min deploy, and routing each through a builder cost an agent per cycle. Expected effect: ops work is never planned as an epic.
+- **bin/koujou-accept.py, factory-run, factory-builder**: `koujou accept --red <task> --base <ref>` takes the task's code back to the base, keeps its tests, and requires them to fail (and to have run). It replaces the per-task reviewer's hollow-test catch that the lean loop dropped, without an agent. Expected effect: no task lands with tests that pass without its change.
+- **bin/koujou-spawned.py, koujou-ready.py, koujou reported**: `--role` tracks each live agent against its time box (builder 60, reviewer 30, epic review 45, validator 60, scout 20, security 30); `ready` and `status` flag any agent OVER BOX, not only builders. Because reviewers sat 12 h unwatched on shukka v1. Expected effect: no agent runs past twice its box unnoticed.
+- **bin/koujou-status.py**: `koujou status`, one screen: runs, budget, live agents, asks, stuck, processes left in task worktrees, keep-awake. Because the owner asked "where are we" about ten times in one session. Expected effect: status answered with one command.
+- **factory-run**: cleanup kills processes left in task worktrees (a builder's `cat` held its agent 63 h); every git command of the run stays out of the user's checkout (the orchestrator ran `git checkout -B` in the owner's Orbitary checkout).
+- **factory-ship**: the post-deploy check must prove this change is what serves, not only 200 (Orbitary's deploy reported success while Caddy served the old config).
+- **Projects**: lessons added to Trendigle, Orbitary and shukka `FACTORY.md` (hook subshell, reload on a serving box, smoke marker, lightweight tags, migration recovery).
+
 ## 2026-11-27 — a builder's stray shell
 
 - **agents/factory-builder**: no command that waits on stdin or outlives the builder; probes get a `timeout`. Because shu-ph3's builder ran `cat > probe.sh` with no input, and the shell held the agent open for 63 hours after it reported done. Expected effect: no builder shell left running after its report.
