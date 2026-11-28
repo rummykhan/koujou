@@ -66,7 +66,7 @@ Input: an approved `requirements.md`. Output: `design.md` beside it. The design 
 
 6. **Check it**: every requirement covered; every contract precise enough to code against without asking; nothing here that contradicts a logged decision without saying it supersedes it; no decisions hidden in prose that belong in the Decisions table.
 
-7. **Gate.** Walk the user through the overview, the decisions (especially the hard-to-reverse ones), the risks, and any new prerequisites as one batch of asks. On approval set `status: approved`, copy hard-to-reverse decisions into the project's decision log if it keeps one, and add the epic to "In progress" in the System design in `AGENTS.md` with a line on what it will change. The as-built sections are not touched until the work ships.
+7. **No gate here: go on to the plan.** The plan gate walks the user through the overview, the decisions (especially the hard-to-reverse ones), the risks, and any new prerequisites, together with the requirements and the plan. On approval there, set `status: approved`, copy hard-to-reverse decisions into the project's decision log if it keeps one, and add the epic to "In progress" in the System design in `AGENTS.md` with a line on what it will change. The as-built sections are not touched until the work ships.
 
 ## Next
 

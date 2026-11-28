@@ -10,9 +10,10 @@ A pipeline that turns a raw idea into shipped, validated work on any project. Be
 ## Pipeline
 
 ```
-raw idea ──► requirements ──► design ──► plan (epic + task graph in beads) ──► delivery loop ──► ship ──► shipped
+raw idea ──► requirements ──► design ──► plan (epic + task graph in beads) ══► delivery loop ──► ship ──► shipped
             factory-spec     factory-design   factory-plan                     factory-run      factory-ship
-              ▲ gate           ▲ gate           ▲ gate                                            ▲ merge gate
+                                                        ▲ THE gate: the user approves             (merges itself once
+                                                          requirements + design + plan together    the PR is mergeable)
                                                                                                     │
                                                            factory improves itself ◄── factory-retro ┘
 ```
@@ -21,7 +22,11 @@ Project setup comes first, once per project: `factory-setup`. It initialises bea
 
 A security review is not a stage of the pipeline: the user asks for one when they want it, on any branch or pull request (`factory-security-review`), and its findings come back as beads.
 
-Each `▲ gate` is a point where the user approves before the next stage starts. Gates exist because an error caught in the requirements costs a sentence to fix and the same error caught after delivery costs the whole epic.
+There is **one human gate: the plan**. Spec, design and plan run back to back without stopping, and the user approves the three together, as one picture: what will be built (requirements), how (design), and in what pieces, at what budget (plan). That gate exists so the user and the factory share one understanding before any code: an error caught there costs a sentence, the same error caught after delivery costs the epic. After it, the factory builds, validates, opens the pull request and merges it once it is mergeable, without asking again. It stops for the user only for what it cannot decide or provide (`factory:needs-user`), or when the budget runs out.
+
+A question only the user can answer that would change the design itself (who the product is for, a choice that costs money) is asked up front, in one batch, before the design is written; everything else is a recorded default the user sees at the gate.
+
+**No gate at all** for Direct and lane-S work, and for small work an existing pattern in the code already settles (another route like the twenty already there, a field added the way the last one was): the factory goes ahead, and the user sees it in the report and on the board.
 
 ## Start here
 
@@ -62,7 +67,7 @@ One folder per work order, at the path `FACTORY.md` gives (default `docs/factory
 | `evidence/` | factory-validator | Screenshots, response captures, logs behind the validation verdict |
 | `retro.md` | factory-retro | What the run taught and what the factory changed about itself |
 
-Each markdown artifact starts with a frontmatter `status: draft | approved` line. A stage may only start when its input artifact is `approved`; only the user approves.
+Each markdown artifact starts with a frontmatter `status: draft | approved` line. Spec, design and plan may each start on their predecessor's draft; `factory-run` starts only once the plan gate has approved all three, and only the user approves.
 
 If the project already has homes for these (a `REQUIREMENTS.md`, a specs folder, a decision log), `FACTORY.md` maps to them and you use those instead of creating parallel ones. Two sources of truth drift within days.
 
@@ -86,7 +91,7 @@ Two rules carry most of the weight:
 Three more hold the rest together:
 
 - **QA is independent of the builders.** The validator uses the running product, then reads back what it stored (the database, the cloud account, GitHub) wherever the factory has read access. How each module is tested is worked out from the project and kept in the profile's Test map; the user is asked only about what could not be inferred, before work starts. Details in the agent files.
-- **Ask the user once, early.** Everything only the user can provide (keys, accounts, access, decisions, assets) is swept for at the requirements and design gates and asked for in one batch. What they cannot provide now is built against a fake or moved to the next pass; what surfaces mid-run bubbles up through a `factory:needs-user` gate while other work continues. Protocol: `~/.claude/skills/factory/reference/blockers.md`.
+- **Ask the user once, early.** Everything only the user can provide (keys, accounts, access, decisions, assets) is swept for while writing the requirements and design and asked for in one batch, at the plan gate at the latest. What they cannot provide now is built against a fake or moved to the next pass; what surfaces mid-run bubbles up through a `factory:needs-user` gate while other work continues. Protocol: `~/.claude/skills/factory/reference/blockers.md`.
 - **The system design stays current.** `AGENTS.md` holds a short, as-built description of the system: components, data model, flows, interfaces, external dependencies. It is rewritten where needed in the same change that alters the system, so every agent starts from the real architecture. Format: `~/.claude/skills/factory/reference/agents-template.md`.
 - **Every run teaches the factory.** `factory-retro` ends each epic by turning the run's evidence into changes to the project profile, the factory's skills, and the workers' instructions.
 

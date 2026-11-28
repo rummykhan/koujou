@@ -1,6 +1,6 @@
 ---
 name: factory-ship
-description: Factory stage 5 — ship a validated epic or pass. Pushes the branch, opens the pull request, waits for CI, merges with the user's approval, checks the deployment, then closes the issues and cleans up. Use at the end of factory-run, or later on a branch that is waiting to be merged ("ship it", "open the PR", "merge the factory branch").
+description: Factory stage 5 — ship a validated epic or pass. Pushes the branch, opens the pull request, waits for CI, merges it as soon as it is mergeable, checks the deployment, then closes the issues and cleans up. Use at the end of factory-run, or later on a branch that is waiting to be merged ("ship it", "open the PR", "merge the factory branch").
 ---
 
 # Factory: ship
@@ -11,12 +11,12 @@ Read `FACTORY.md` first: `## Git policy` (push, integration, who merges, merge m
 
 | Profile says | The factory does |
 |---|---|
-| Integration: pull request; merge: factory, after approval (the default) | Everything below, stopping once to ask before merging |
-| Merge: factory, standing permission | Everything below without stopping, for the environments the permission names |
+| Integration: pull request; merge: factory (the default) | Everything below without stopping: the pull request is merged as soon as it is mergeable (checks green, no conflict, any required human review given) |
+| Merge: factory, after approval | Everything below, stopping once to ask before merging (only where the user has asked for it) |
 | Merge: user | Steps 1 to 3, then hands over the PR link and waits; resume at step 5 when the user says it is merged |
 | Push: never, or no remote | Step 1, then merges locally into the base branch only if the profile allows it; otherwise hands over the branch name |
 
-Never read silence as approval, and never treat approval given for an earlier merge as covering this one unless the profile records standing permission.
+The user approved the work at the plan gate; merging what that plan produced, once the checks pass, is part of what they approved, wherever the merge deploys. That is the point of the factory: hand it the work, and it is shipped. Where a profile still says "after approval", never read silence as approval.
 
 ## 1. Check that it is ready
 
@@ -61,13 +61,15 @@ A red check is a failure of this stage, not noise. Read the log. If the branch c
 
 ## 4. Merge
 
-Show the user, in one message: the PR link, the checks, what merging triggers, anything not included, and the rollback. Ask to merge. On approval (or standing permission):
+When the pull request is mergeable (`gh pr view <n> --json mergeable,mergeStateStatus`: `MERGEABLE` and the checks green), merge it. Tell the user in the same message as the deploy result: the PR link, what it triggered, anything not included, and the rollback. (Only where the profile says "after approval": show that first and wait for the yes.)
 
 ```bash
 gh pr merge <number> --<merge|squash|rebase per the profile> --delete-branch --match-head-commit <the sha that was checked>
 ```
 
 `--match-head-commit` makes the merge fail if the branch moved after the checks you showed.
+
+Stamp every issue the pull request carries, so the board moves them on: `bd update <id> --set-metadata pr_merged_at=$(date -u +%FT%TZ)` now, and `deployed_at` once the post-deploy check in step 5 has passed, before they are closed.
 
 If the profile requires a human reviewer on the PR, the factory does not approve its own PR or bypass branch protection; it waits.
 

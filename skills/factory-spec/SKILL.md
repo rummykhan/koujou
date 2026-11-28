@@ -66,7 +66,7 @@ Output: `raw.md` and `requirements.md` in the work order folder (location from `
    - Is the unhappy path covered: empty, invalid, unauthorised, failure of a dependency?
    - Does anything contradict existing behaviour or a logged decision? Say so explicitly.
 
-7. **Gate.** Present a short summary: the requirements in a line each, the assumptions, the lane you recommend, and the prerequisite list as one batch of asks, each answerable with "here it is", "later", or "not this pass". Record the answers in the Status column; verify anything provided with the cheapest real call before relying on it. When the user approves, set `status: approved`. An unavailable prerequisite does not block approval: it shapes the plan. Changes after approval are edits to this file that the user sees, never silent reinterpretation downstream.
+7. **No gate here: go on.** Continue straight to design (lane L) or plan (lane M); the user approves these requirements together with the design and plan at the plan gate, where the summary (the requirements in a line each, the assumptions, the lane, and the prerequisites as one batch of asks, each answerable with "here it is", "later", or "not this pass") is part of what they see. Stop here only for a question that would change what gets designed and has no sensible default; ask it, with your recommendation, then continue. Record answers in the Status column; verify anything provided with the cheapest real call before relying on it. The plan gate sets `status: approved`. An unavailable prerequisite does not block approval: it shapes the plan. Changes after approval are edits to this file that the user sees, never silent reinterpretation downstream.
 
 ## Next
 

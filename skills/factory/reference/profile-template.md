@@ -35,7 +35,7 @@ Known gaps in the gate: <areas with no tests, flaky tests, things only checkable
 - Commits: <style, e.g. conventional commits ending with the bead id>. Factory builders commit on their own task branch; say so here explicitly if CLAUDE.md / AGENTS.md carries a general "do not commit unless asked" rule (the block `bd init` generates does), so builders are not caught between the two.
 - Push: <never (no remote) | epic branch when shipping | epic branch after each landing>. Task branches are never pushed.
 - Integration: <pull request to base, opened by the factory | local merge into base | hand over the branch>
-- Merge: <factory, after the user approves each time (default) | factory, standing permission | user>; method: <merge | squash | rebase>
+- Merge: <factory, as soon as the pull request is mergeable (default) | factory, after the user approves each time | user>; method: <merge | squash | rebase>
 - Required human review on pull requests: <none | who>. The factory never approves its own pull request or bypasses branch protection.
 
 ## Deploy policy

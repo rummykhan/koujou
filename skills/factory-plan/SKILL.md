@@ -101,9 +101,9 @@ Use `--sandbox` on writes if the profile says beads syncs to a remote and the pl
 
 Read the swarm analysis critically: are the waves what you expect; is the parallelism plausible; are there orphans or a task that depends on nothing but obviously should? Then check coverage: every requirement is served by at least one task, and every task serves a requirement. Check the design the same way: every component, message and handle in its tables is named in some task's criteria. A row nobody's criteria mention gets built by nobody: on the second real project the design gave the pass list a "source of the data" line and a stale-data warning, no criterion asked for them, the builder left them out and said so, and the two pages that needed them were already waiting. Fix the graph before showing it.
 
-## Gate
+## Gate: the one human gate
 
-Show the user the epics, the task list by wave, the run's budget (three agents per task, at least ten; an hour per task, at least four), what runs in parallel, what is waiting on them (the open prerequisites, with what each one blocks), and anything deliberately left out or moved to the next pass. On approval, the plan is the contract for `factory-run`. If the project also keeps a human roadmap, add the epic to it now.
+This is where the user approves the work: requirements, design (lane L) and plan, together, in one message they can read in a couple of minutes. Lead with what will be built and the decisions you defaulted, then the prerequisites as one batch of asks, then the plan. Show the user the epics, the task list by wave, the run's budget (three agents per task, at least ten; an hour per task, at least four), what runs in parallel, what is waiting on them (the open prerequisites, with what each one blocks), and anything deliberately left out or moved to the next pass. On approval, set `status: approved` on the requirements, design and plan alike; the plan is the contract for `factory-run`, which then runs through to the merge without asking again. If the project also keeps a human roadmap, add the epic to it now.
 
 ## Next
 

@@ -6,6 +6,7 @@
 #   koujou accept --red <task-id> --base <ref>   prove the task's tests fail without its change
 #   koujou times <epic-id> | --label <label>   where a run's time went, read from beads
 #   koujou ready <epic-id> | --label <label>   tasks that can start now (landed tasks awaiting merge count as done)
+#   koujou board start|stop|install|tui|add <path>   the live kanban (koujou-ui, a separate package)
 #   koujou status [<epic-id> | --label <label>]   one screen: runs, budget, live agents past their box, asks, strays
 #   koujou spawned <id>... [--role <role>] [--resumed]   count an agent run (--role tracks it live; --resumed: live again, not counted)
 #   koujou reported <id> --role <role> | --all   that agent (or every agent on it) has reported; no longer live
@@ -99,6 +100,10 @@ cmd_init() {
   if grep -qxF '@AGENTS.md' CLAUDE.md; then say "  ok    CLAUDE.md imports AGENTS.md"
   else printf '\n@AGENTS.md\n' >> CLAUDE.md; say "  new   CLAUDE.md now imports AGENTS.md"; fi
 
+  # put the project on the board (koujou-ui reads this list)
+  mkdir -p "${KOUJOU_STATE:-$HOME/.koujou}"
+  grep -qxF "$PWD" "${KOUJOU_STATE:-$HOME/.koujou}/projects" 2>/dev/null || printf '%s\n' "$PWD" >> "${KOUJOU_STATE:-$HOME/.koujou}/projects"
+
   cat <<'MSG'
 
 Project is wired for the factory. The factory's files are not committed (beads commits its own on first setup).
@@ -142,6 +147,19 @@ cmd_budget() { # is the run inside its budget of agents and time? (exit 1 = over
   command -v bd >/dev/null 2>&1 || { say "bd (beads) is not installed."; exit 1; }
   command -v python3 >/dev/null 2>&1 || { say "koujou budget needs python3."; exit 1; }
   python3 "$SRC/bin/koujou-budget.py" "$@"
+}
+
+cmd_board() { # the live kanban lives in its own package: koujou-ui
+  local ui=""
+  if command -v koujou-ui >/dev/null 2>&1; then ui="koujou-ui"
+  elif [[ -f "$SRC/../koujou-ui/server/cli.js" ]]; then ui="node $SRC/../koujou-ui/server/cli.js"; fi
+  if [[ -z "$ui" ]]; then
+    say "The board is koujou-ui, a separate package. Install it once:"
+    say "  git clone https://github.com/rummykhan/koujou-ui && cd koujou-ui && npm install -g ."
+    say "then: koujou board start   (or: koujou board install, to keep it always running)"
+    return 1
+  fi
+  $ui "$@"
 }
 
 cmd_status() { # one screen: runs, budget, live agents, asks, strays
@@ -223,10 +241,11 @@ case "${1:-}" in
   spawned) shift; cmd_spawned "$@";;
   reported) shift; cmd_spawned --reported "$@";;
   status) shift; cmd_status "$@";;
+  board) shift; cmd_board "$@";;
   converge) shift; cmd_converge "$@";;
   budget) shift; cmd_budget "$@";;
   update) cmd_update;;
   link) cmd_link;;
   uninstall) cmd_uninstall;;
-  *) sed -n '2,18p' "$self" | sed 's/^# \{0,1\}//';;
+  *) sed -n '2,19p' "$self" | sed 's/^# \{0,1\}//';;
 esac

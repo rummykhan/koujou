@@ -2,6 +2,15 @@
 
 Changes the factory made to itself, each tied to the run that taught it. `factory-retro` appends here and checks earlier entries' expected effects against later runs.
 
+## 2026-11-27 — one gate, merge when mergeable, a live board, never idle
+
+The owner: the factory should take the work once and ship it. "Plan mean initial plan: vision/requirements, design, plan and go"; "it should PR and once PR is mergable merge it, it shouldn't care where it's going"; and a board instead of "continue / where are we / resume".
+
+- **skills/factory, factory-spec, factory-design, factory-plan**: one human gate, the plan: spec, design and plan run back to back and the user approves the three together. No gate for Direct, lane S, or small work an existing pattern settles. Expected effect: one approval per epic.
+- **skills/factory-ship, profile template, the three projects' FACTORY.md**: merge as soon as the pull request is mergeable, wherever it deploys; the plan gate is the approval. Stamps `pr_merged_at` and `deployed_at` on each issue. Expected effect: no merge waits on the user.
+- **koujou-ui** (new repo, github.com/rummykhan/koujou-ui): a live kanban of every project (Backlog, Active, In progress, Code review, Merged, Deployed, Closed) with live agents, budget and asks; projects added from the workspace in the page; always running as a login service; a terminal view. `koujou board` delegates to it; `koujou init` puts the project on it. Expected effect: the user never asks where things stand.
+- **skills/factory-run**: never end a turn with work pending unless a background watcher or timed check-back will wake the session; push-notify the user when the run needs them or ships. Expected effect: no "continue" or "resume" from the user.
+
 ## 2026-11-27 — speed, accuracy and automation from the shukka/Orbitary session
 
 - **skills/factory (Sizing)**: a **Direct** lane for work whose time goes to live cycles (deploys, migrations, recoveries, few-line fixes): the session does it itself, no factory stages. Because every switch-over defect was a one-line fix behind a 10–20 min deploy, and routing each through a builder cost an agent per cycle. Expected effect: ops work is never planned as an epic.

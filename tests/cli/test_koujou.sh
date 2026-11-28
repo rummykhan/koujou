@@ -196,6 +196,10 @@ check "status --label with no label is a usage error" bash -c '"$0" status --lab
 check "a builder whose built_at is stamped is not live, without reported" bash -c '! "$0" status "$2" | grep -q "agent  $1"' "$K" $r1 $epic
 check "status shows what waits on the user and the machine" bash -c 'o=$("$0" status); echo "$o" | grep -q "^waiting on you:" && echo "$o" | grep -q "^machine:"' "$K"
 
+echo "  koujou board"
+check "init puts the project on the board's list" bash -c 'd=$(mktemp -d) && cd "$d" && git init -q && KOUJOU_STATE="$d/state" "$0" init >/dev/null 2>&1 && grep -qx "$(pwd)" "$d/state/projects"' "$K"
+check "board runs koujou-ui, or says how to install it" bash -c 'out=$("$0" board list 2>&1); rc=$?; [ $rc = 0 ] || echo "$out" | grep -q "npm install -g ."' "$K"
+
 echo "  koujou accept --red"
 R="$WORK/red"; mkdir -p "$R/test" && cd "$R" && git init -q -b main
 bd init --non-interactive --prefix rd >/dev/null 2>&1

@@ -56,6 +56,8 @@ Stop and tell the user if any of these fails; a run started on a bad footing was
 
 Record the start: `bd update <epic> --claim --set-metadata validate_rounds=0 --set-metadata claimed_at=$(date -u +%FT%TZ)`, then `koujou budget <epic>` and put its line in the message telling the user the run has started.
 
+Start the board, `koujou board start`, and give the user its link (http://127.0.0.1:8787) in the message that says the run has started: a live page of every project's epics and tasks (done, in flight, held, landed), live agents and what waits on them, so they never have to ask where things stand.
+
 Keep the machine awake for the whole run: `koujou awake start` (and `koujou awake stop` after the report). A run outlasts the machine's idle timer, and a sleeping laptop stalls every agent and makes timed waits fail for reasons that have nothing to do with the code: on shukka v1 a lid closed for four hours turned two acceptance cases red and a gate's waits into timeouts. On battery a closed lid still sleeps the machine; when `koujou awake` says so, tell the user to plug in or keep the lid open.
 
 ## Keeping time
@@ -230,13 +232,19 @@ Only when every child is closed (or `factory:awaiting-merge`) and the last valid
 - Write `report.md` in the work order: what shipped by requirement; evidence (gate result, validator verdict, commit, evidence files); time (the output of `koujou times` and `koujou budget`: per task, build, review and queue time, attempts, agents; the run's total against its budget); **waiting on you** (open `factory:needs-user` items: what is needed, where to put it, what it unblocks); deferred items with ids; stuck items; rounds used; anything built against a fake; anything not verified.
 - `koujou awake stop`.
 - Clean up what the run created on the machine: task worktrees and branches, servers you started, test databases or tables made for the run, and any process still running in a task worktree (`koujou status` lists them; kill each by its pid). One builder's `cat > probe.sh`, waiting on input nobody would send, held its agent open for 63 hours after it had reported. Scratch folders too, and during the run, not only at the end: reviewers who build a copy of the project to mutate it leave a gigabyte each, and fourteen tasks left six. Leave the epic branch and its worktree: shipping needs them.
-- Run `factory-ship`: it pushes the branch, opens the pull request, waits for CI, merges with the user's approval, checks the deploy, and closes the issues and the epic. How far it goes without asking is the profile's git policy. Where there is no remote and the profile lets the factory merge locally, it does that and closes the epic: `bd close <epic> --reason "<summary> | evidence: validator pass at <sha> | residue: <deferred ids>"`.
+- Run `factory-ship`: it pushes the branch, opens the pull request, waits for CI, merges it once it is mergeable, checks the deploy, and closes the issues and the epic. How far it goes without asking is the profile's git policy. Where there is no remote and the profile lets the factory merge locally, it does that and closes the epic: `bd close <epic> --reason "<summary> | evidence: validator pass at <sha> | residue: <deferred ids>"`.
 
 If stuck tasks remain, the epic stays open. Report it as partially delivered with exactly what is and is not in the branch.
 
 ## 6. Retro
 
 Run `factory-retro` for the epic, whether it shipped or stopped; it need not wait for the user to approve the merge. A stopped run usually has more to teach.
+
+## Never idle, never needing a nudge
+
+The user should never have to type "continue", "resume" or "where are we". So a turn never ends while the run has work pending unless something is set to wake you: agents you spawned in the background, a command run in the background (`gh run watch <id> --exit-status`, `gh pr checks <n> --watch`, a deploy's own wait, the gate), or, for anything nothing will report on (an external queue, a slow environment), a timed check-back (`ScheduleWakeup`, or a background `sleep N && <check>` where that is all there is). Before ending a turn, name to yourself what will wake you; if nothing will, you are not done. And while waiting, do the next independent thing (triage, the next wave, the report) instead of waiting.
+
+**Tell the user without being asked.** When the run needs them (a `factory:needs-user` on the critical path, an over-budget stop, a stuck task nothing else can pass), and when it ships or stops, send a push notification if the session has a tool for it (`PushNotification`), one line with what is needed or what happened; the board shows the same.
 
 ## Reporting to the user
 

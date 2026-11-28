@@ -75,6 +75,11 @@ def check(args):
             holder = d
         elif d.get("issue_type") != "epic":
             issues.append(d)
+    return compute(holder, issues)
+
+
+def compute(holder, issues):
+    """(over, line) from the run's holder (epic or run record) and its issues, already read."""
     meta = (holder or {}).get("metadata") or {}
 
     planned = sum(1 for d in issues if d.get("issue_type") != "bug")
