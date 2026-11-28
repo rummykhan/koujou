@@ -2,6 +2,16 @@
 
 Changes the factory made to itself, each tied to the run that taught it. `factory-retro` appends here and checks earlier entries' expected effects against later runs.
 
+## 2026-11-28 — koujou-ui board redesign, done directly (kj-asv)
+
+After kou-3qa shipped, the owner iterated on the board for a day with one session: three design systems tried on branches, twelve pull requests, none through the factory's stages. Direct was the right lane (a person looking at the page every few minutes); what it lacked is below.
+
+- **factory-spec**: when a request names a reference, inspect the reference itself and write what was measured into the requirements. Because "like GitHub's pixel trail" was built three times from screenshots and sent back each time; the build made after reading GitHub's markup, styles and timings in a browser was accepted. Expected effect: a requirement that cites a reference carries measurements, and its first build is not sent back for "not like it".
+- **bin/koujou (`direct`), skills/factory**: `koujou direct start "<title>"` opens and claims a bead labelled `factory:direct`; `koujou direct done <id> --pr <url>` stamps and closes it. Because the Direct lane said "a bead records it" and gave no way to do it in one step, so twelve merged pull requests left nothing on the board. Expected effect: direct work is on the board while it is done.
+- **bin/koujou (`ship`), factory-ship**: `koujou ship [--bead <id>] [--deploy] [--dry-run]` pushes the branch, opens the pull request, waits for checks where there are any, merges by the profile's method at the pushed commit, deletes the remote branch with git and names (or runs) the profile's deploy command; it stops at the pull request where the profile says the user merges. Because each of those twelve changes took the same eight hand-typed steps. Expected effect: a small change ships with one command.
+- **bin/koujou (`demo`)**: `koujou demo <dir>` seeds a throwaway beads project (two epics, one in progress with a budget, a live agent, blocked tasks, an ask, closed work) and registers it on no board. Because every validation of a tool that reads beads, and the README's screenshots, each built such a project by hand. Expected effect: no validator or test writes its own seed script for beads.
+- **AGENTS.md**: the demo is required for changes to what run/plan/ship make the factory do, not for wording, examples or pointers to a tested command. Because two commits of wording sat unpushed for a day behind a demo that could not have told them from no change. Expected effect: wording changes push after `tests/run.sh`.
+
 ## 2026-11-27 — koujou-ui / kou-3qa (project home)
 
 First run on koujou-ui: lane M, 2 tasks, 4 agents of 10, 24 min from start to validated, shipped as PR #1. Earlier entries checked: one gate (confirmed: one approval, merged without asking), never idle (confirmed: no "continue" needed), `accept --red` (confirmed: ran on both tasks, and the orchestrator used the same check on its own fix).

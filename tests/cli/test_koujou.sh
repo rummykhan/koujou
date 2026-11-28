@@ -230,4 +230,44 @@ git checkout -q -- math.js
 bd update $redt --set-metadata accept="node --test --test-name-pattern $redt no-such-dir/" >/dev/null
 check "red: a command that runs no test at all is not taken as red" bash -c '! "$0" accept --red "$1" --base base >/dev/null && "$0" accept --red "$1" --base base | grep -q "proves nothing"' "$K" $redt
 
+echo "  koujou direct / demo / ship"
+K="$TESTS_DIR/../bin/koujou"
+"$K" demo "$WORK/demo" dm >/dev/null 2>&1; cd "$WORK/demo"
+check "demo seeds epics, a live agent, blocked work, an ask and closed work" bash -c 'test -d .beads && bd list --all --json | python3 -c "
+import json,sys
+d=json.load(sys.stdin)
+st=[x[\"status\"] for x in d]
+assert sum(x[\"issue_type\"]==\"epic\" for x in d)==2, \"epics\"
+assert \"closed\" in st and \"in_progress\" in st, st
+assert any(\"agent_live\" in (x.get(\"metadata\") or {}) for x in d), \"no live agent\"
+assert any(\"factory:needs-user\" in (x.get(\"labels\") or []) for x in d), \"no ask\"
+assert any(x.get(\"dependency_count\",0)>0 for x in d), \"no blocked task\"
+"'
+check "demo puts the project on no board" bash -c '! grep -qs "$0" "${KOUJOU_STATE:-$HOME/.koujou}/projects"' "$WORK/demo"
+check "demo refuses a folder that is not empty" bash -c '! "$0" demo "$1"' "$K" "$WORK/demo"
+did=$("$K" direct start "Fix the deploy hook")
+check "direct start makes a claimed bead labelled factory:direct" bash -c 'bd show "$0" --json | python3 -c "
+import json,sys
+d=json.load(sys.stdin); d=d[0] if isinstance(d,list) else d
+assert d[\"status\"]==\"in_progress\" and \"factory:direct\" in d[\"labels\"] and d[\"metadata\"][\"claimed_at\"]
+"' "$did"
+"$K" direct done "$did" --pr https://example.test/pr/1 --note "hook fixed" >/dev/null
+check "direct done closes it with the pull request and the time" bash -c 'bd show "$0" --json | python3 -c "
+import json,sys
+d=json.load(sys.stdin); d=d[0] if isinstance(d,list) else d
+m=d[\"metadata\"]
+assert d[\"status\"]==\"closed\" and m[\"pr\"]==\"https://example.test/pr/1\" and m[\"shipped_at\"] and m[\"pr_merged_at\"], m
+assert \"hook fixed\" in d[\"close_reason\"] and \"example.test\" in d[\"close_reason\"], d[\"close_reason\"]
+"' "$did"
+printf '# Factory profile\n\n| Purpose | Command |\n|---|---|\n| Deploy | merge to `trunk`, then `make release` in the main checkout (serves `dist/`) |\n\n## Git policy\n- Base branch: `trunk`\n- Merge: factory, as soon as the pull request is mergeable; method: rebase.\n' > FACTORY.md
+git add -A >/dev/null 2>&1; git -c user.name=t -c user.email=t@example.test commit -qm "profile" >/dev/null 2>&1; git branch -M trunk
+check "ship refuses on the base branch" bash -c '! "$0" ship --dry-run >/dev/null 2>&1 && "$0" ship --dry-run 2>&1 | grep -q "not the base (trunk)"' "$K"
+git checkout -q -b small-fix; echo x > x.txt; git add x.txt; git -c user.name=t -c user.email=t@example.test commit -qm "Add x" >/dev/null
+check "ship --dry-run reads the base, method and deploy command from the profile and runs nothing" bash -c 'o=$("$0" ship --dry-run --bead dm-1) && echo "$o" | grep -q "into trunk: Add x" && echo "$o" | grep -q -- "--rebase" && echo "$o" | grep -q "make release" && echo "$o" | grep -q "close dm-1" && test "$(git branch --show-current)" = small-fix' "$K"
+echo dirty >> FACTORY.md
+check "ship refuses a dirty tree" bash -c '! "$0" ship --dry-run >/dev/null 2>&1' "$K"
+git checkout -q -- FACTORY.md
+sed -i.bak 's/Merge: factory.*/Merge: user; method: squash/' FACTORY.md && rm -f FACTORY.md.bak && git -c user.name=t -c user.email=t@example.test commit -qam "user merges" >/dev/null
+check "ship stops at the pull request when the profile says the user merges" bash -c '"$0" ship --dry-run | grep -q "the user merges" && ! "$0" ship --dry-run | grep -q "would: merge"' "$K"
+
 finish

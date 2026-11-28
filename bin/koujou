@@ -14,6 +14,9 @@
 #   koujou converge <epic-id> | --label <label> [--record]   may the fix loop go on? answered from the run's record
 #   koujou wait <epic-id> start|end   time a run spends stopped, waiting on you
 #   koujou awake start|stop|status   keep this machine from sleeping while a run lasts (macOS caffeinate, Linux systemd-inhibit)
+#   koujou direct start "<title>" | done <id> [--pr <url>] [--note <text>]   a bead for work done directly, so the board shows it
+#   koujou ship [--title <t>] [--bead <id>] [--deploy] [--dry-run]   a small change: push, pull request, merge, delete the branch, deploy
+#   koujou demo <dir> [<prefix>]   seed a throwaway beads project (epics, a blocked task, a live agent, an ask) for validation and screenshots
 #   koujou update      pull the latest factory and relink
 #   koujou link        (re)link skills, agents and this command into ~/.claude and ~/.local/bin
 #   koujou uninstall   remove the links (beads and your projects are left alone)
@@ -185,6 +188,111 @@ cmd_board() { # the live kanban lives in its own package: koujou-ui
   $ui "$@"
 }
 
+now() { date -u +%FT%TZ; }
+
+cmd_direct() { # a bead for Direct-lane work: it is on the board while it is done, and closed with its evidence
+  command -v bd >/dev/null 2>&1 || { say "bd (beads) is not installed."; exit 1; }
+  local sub="${1:-}"; shift || true
+  case "$sub" in
+    start)
+      [[ -n "${1:-}" ]] || { say "usage: koujou direct start \"<title>\""; exit 2; }
+      local id; id="$(bd create "$1" -t task -l factory:direct -d "${2:-Done directly in the session, without factory stages.}" --silent)" || exit 1
+      bd update "$id" --claim --set-metadata claimed_at="$(now)" >/dev/null
+      say "$id";;
+    done)
+      local id="${1:-}" pr="" note=""; [[ -n "$id" ]] || { say "usage: koujou direct done <id> [--pr <url>] [--note <text>]"; exit 2; }
+      shift
+      while [[ $# -gt 0 ]]; do case "$1" in --pr) pr="$2"; shift 2;; --note) note="$2"; shift 2;; *) say "unknown option $1"; exit 2;; esac; done
+      local set=(--set-metadata "shipped_at=$(now)")
+      [[ -n "$pr" ]] && set+=(--set-metadata "pr=$pr" --set-metadata "pr_merged_at=$(now)")
+      bd update "$id" "${set[@]}" >/dev/null
+      bd close "$id" -r "direct: ${note:-done}${pr:+ ($pr)}" >/dev/null
+      say "closed $id";;
+    *) say "usage: koujou direct start \"<title>\" | done <id> [--pr <url>] [--note <text>]"; exit 2;;
+  esac
+}
+
+cmd_ship() { # a small change on its own branch: push, pull request, merge, delete the branch, deploy. Policy from FACTORY.md
+  local title="" bead="" deploy=0 dry=0
+  while [[ $# -gt 0 ]]; do case "$1" in
+    --title) title="$2"; shift 2;; --bead) bead="$2"; shift 2;; --deploy) deploy=1; shift;; --dry-run) dry=1; shift;;
+    *) say "usage: koujou ship [--title <t>] [--bead <id>] [--deploy] [--dry-run]"; exit 2;; esac; done
+  git rev-parse --git-dir >/dev/null 2>&1 || { say "not a git repository"; exit 1; }
+  local main profile base method merges cmd branch sha
+  main="$(git worktree list --porcelain | sed -n '1s/^worktree //p')"
+  profile="$(git rev-parse --show-toplevel)/FACTORY.md"; [[ -f "$profile" ]] || profile="$main/FACTORY.md"
+  [[ -f "$profile" ]] || { say "no FACTORY.md: the base branch, merge method and deploy command come from it (/factory-setup)"; exit 1; }
+  base="$(sed -n 's/^- Base branch: `\([^`]*\)`.*/\1/p' "$profile" | head -1)"; base="${base:-main}"
+  merges="$(grep -m1 '^- Merge:' "$profile" || true)"
+  method="$(printf '%s' "$merges" | sed -n 's/.*method: \([a-z]*\).*/\1/p')"; method="${method:-squash}"
+  # The Deploy row's command: the first `code` in it that has a space (a branch or file name alone is not one).
+  cmd="$(grep -m1 '^| Deploy |' "$profile" | awk -F'`' '{ for (i = 2; i <= NF; i += 2) if ($i ~ / /) { print $i; exit } }' || true)"
+  branch="$(git branch --show-current)"
+  [[ -n "$branch" && "$branch" != "$base" ]] || { say "on ${branch:-a detached head}: ship from a branch of its own, not the base ($base)"; exit 1; }
+  [[ -z "$(git status --porcelain --untracked-files=no)" ]] || { say "uncommitted changes: commit them first"; exit 1; }
+  title="${title:-$(git log -1 --format=%s)}"
+  local by_user=0; [[ "$merges" == *"Merge: user"* ]] && by_user=1
+  if [[ $dry == 1 ]]; then
+    say "would: push $branch"
+    say "would: open a pull request into $base: $title"
+    if [[ $by_user == 1 ]]; then say "would: stop there (the profile says the user merges)"; return 0; fi
+    say "would: merge it (--$method) at the pushed commit and delete the remote branch"
+    [[ -n "$bead" ]] && say "would: close $bead with the pull request"
+    if [[ -n "$cmd" ]]; then say "would: $([[ $deploy == 1 ]] && echo "deploy in $main" || echo "print the deploy command"): $cmd"; fi
+    return 0
+  fi
+  command -v gh >/dev/null 2>&1 || { say "gh (GitHub CLI) is not installed"; exit 1; }
+  git push -q -u origin "$branch"
+  sha="$(git rev-parse HEAD)"
+  local url; url="$(gh pr create --base "$base" --head "$branch" --title "$title" --body "$(git log --format='- %s%n%n%b' "origin/$base..HEAD")" | tail -1)"
+  say "pull request: $url"
+  if [[ $by_user == 1 ]]; then say "the profile says the user merges: stopping here"; return 0; fi
+  # Checks, where the repository has any: a red one stops the ship.
+  if gh pr checks "$url" 2>/dev/null | grep -q .; then gh pr checks "$url" --watch || { say "checks failed: not merged"; exit 1; }; fi
+  gh pr merge "$url" "--$method" --match-head-commit "$sha" >/dev/null
+  git push -q origin --delete "$branch" 2>/dev/null || true   # not --delete-branch: it errors from a worktree
+  say "merged (--$method)"
+  # Shipped from the main checkout itself: go back to the base, so the deploy runs on what was merged.
+  if [[ "$(git rev-parse --show-toplevel)" == "$main" ]]; then git checkout -q "$base" && git pull -q --ff-only && git branch -q -D "$branch"; fi
+  [[ -n "$bead" ]] && cmd_direct done "$bead" --pr "$url" --note "$title"
+  if [[ -n "$cmd" ]]; then
+    if [[ $deploy == 1 ]]; then say "deploy in $main: $cmd"; (cd "$main" && bash -c "$cmd"); else say "deploy (in $main): $cmd"; fi
+  fi
+}
+
+cmd_demo() { # a throwaway beads project that looks like real work, for validation, screenshots and tests
+  command -v bd >/dev/null 2>&1 || { say "bd (beads) is not installed."; exit 1; }
+  local dir="${1:-}" prefix="${2:-demo}"
+  [[ -n "$dir" ]] || { say "usage: koujou demo <dir> [<prefix>]"; exit 2; }
+  if [[ -e "$dir" && -n "$(ls -A "$dir" 2>/dev/null)" ]]; then say "$dir is not empty: give a new or empty folder"; exit 1; fi
+  mkdir -p "$dir" && cd "$dir"
+  git init -q && bd init --non-interactive --skip-agents --prefix "$prefix" >/dev/null 2>&1
+  export BEADS_ACTOR="${BEADS_ACTOR:-demo}"
+  local t; t="$(now)"
+  mk() { bd create "$@" --silent; }
+  local e1 e2 a1 a2 a3 a4 b1 b2 b3
+  e1="$(mk "Theme settings: light, dark and system" -t epic -p 1 -d "Let people choose how the app looks.")"
+  e2="$(mk "Offline drafts" -t epic -p 2 -d "Write without a connection; sync when back.")"
+  a1="$(mk "Theme toggle in settings" -t feature -p 1 --parent "$e1" -d "A three-way switch.")"
+  a2="$(mk "Persist the chosen theme across reloads" -t task -p 1 --parent "$e1" -d "Saved preference.")"
+  a3="$(mk "Dark palette for charts" -t task -p 2 --parent "$e1" -d "Charts follow the theme.")"
+  a4="$(mk "Respect the system theme by default" -t task -p 2 --parent "$e1" -d "prefers-color-scheme.")"
+  b1="$(mk "Local draft store" -t feature -p 2 --parent "$e2" -d "IndexedDB.")"
+  b2="$(mk "Sync drafts when the connection returns" -t task -p 2 --parent "$e2" -d "Retry with backoff.")"
+  b3="$(mk "Decide: how long to keep unsynced drafts" -t decision -p 2 --parent "$e2" -l factory:needs-user -d "30 days, or forever?")"
+  mk "Search ignores accents" -t bug -p 1 -d "cafe should find café." >/dev/null
+  mk "Export a report as PDF" -t feature -p 3 -d "From the share menu." >/dev/null
+  bd dep add "$a3" "$a1" >/dev/null; bd dep add "$b2" "$b1" >/dev/null
+  bd update "$e1" --claim --set-metadata claimed_at="$t" --set-metadata agent_budget=12 --set-metadata time_budget_h=5 >/dev/null
+  bd update "$a1" --claim --set-metadata built_at="$t" --set-metadata merged_at="$t" --set-metadata agent_runs=2 >/dev/null
+  bd update "$a2" --claim --set-metadata agent_live="builder@$t" --set-metadata agent_runs=1 >/dev/null
+  bd close "$a4" -r "shipped" >/dev/null
+  say "demo project: $(pwd)"
+  say "  2 epics (1 in progress), 1 live agent, 2 blocked tasks, 1 ask, 1 closed; prefix $prefix"
+  say "  it is on no board. To look at it without touching yours:"
+  say "    KOUJOU_STATE=\$(mktemp -d) koujou board add $(pwd)   # then: KOUJOU_STATE=<that> koujou-ui serve --port <free>"
+}
+
 cmd_status() { # one screen: runs, budget, live agents, asks, strays
   command -v bd >/dev/null 2>&1 || { say "bd (beads) is not installed."; exit 1; }
   python3 "$SRC/bin/koujou-status.py" "$@"
@@ -267,6 +375,9 @@ case "${1:-}" in
   board) shift; cmd_board "$@";;
   converge) shift; cmd_converge "$@";;
   budget) shift; cmd_budget "$@";;
+  direct) shift; cmd_direct "$@";;
+  ship) shift; cmd_ship "$@";;
+  demo) shift; cmd_demo "$@";;
   update) cmd_update;;
   link) cmd_link;;
   uninstall) cmd_uninstall;;

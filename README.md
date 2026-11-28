@@ -103,7 +103,7 @@ In your terminal:
 | `koujou accept --red <task> --base <ref>` | Prove the task's tests fail without its change (code taken back, tests kept). Replaces the per-task reviewer's hollow-test check. |
 | `koujou times <epic-id>` | Time per task (build, review, queue), bounces, rebases and agents used. |
 | `koujou ready <epic-id>` | The tasks of a run that can start now. Like `bd ready`, but a task that has landed and stays open until you merge counts as done, so the next wave shows up. Also lists what is in flight and for how long, and flags a worker that has been quiet far longer than any build so far. |
-| `koujou board start\|install\|tui` | The live kanban of every project (Backlog, Active, In progress, Code review, Merged, Deployed, Closed), from the separate package [koujou-ui](https://github.com/koujou-ai/koujou-ui). `install` keeps it always running; `koujou init` puts each project on it. |
+| `koujou board start\|install\|tui` | The live board of every project (a kanban by beads status, a dependency tree and a what's-next queue), from the separate package [koujou-ui](https://github.com/koujou-ai/koujou-ui). `install` keeps it always running; `koujou init` puts each project on it. |
 | `koujou status [<epic-id>]` | One screen: runs in progress, tasks, budget, live agents and any past their time box, what waits on you, what is stuck, leftover processes in task worktrees. |
 | `koujou reported <id> --role <role>` | That agent has reported; it is no longer live (`--all` for every agent on the issue). `koujou spawned <id> --role <role> --resumed` marks a continued agent live again without counting it. |
 | `koujou budget <epic-id>` | The run's agents and working hours against its budget; exits 1 when over. |
@@ -111,6 +111,9 @@ In your terminal:
 | `koujou converge <epic-id>` | After a validation round: may the fix loop go on? Says continue, which bug is stuck, or stop, from the run's record. |
 | `koujou wait <epic-id> start\|end` | Mark when a run stops to wait for you and when it resumes, so `koujou times` reports waiting apart from work. |
 | `koujou awake start\|stop\|status` | Keep the machine from sleeping while a run lasts (`caffeinate` on macOS, `systemd-inhibit` on Linux). The delivery loop starts it for you. |
+| `koujou direct start "<title>"` / `done <id> [--pr <url>]` | A bead for work done directly in the session, without factory stages: opened and claimed before the work, so the board shows it; closed with the pull request and the time. |
+| `koujou ship [--bead <id>] [--deploy] [--dry-run]` | Ship a small change from its own branch in one step: push, open the pull request, wait for checks, merge by the method in `FACTORY.md`, delete the remote branch, name (or run) the profile's deploy command. Stops at the pull request where the profile says the user merges. |
+| `koujou demo <dir> [<prefix>]` | Seed a throwaway beads project (two epics, a live agent, blocked tasks, an ask, closed work) for validating or photographing anything that reads beads. It is put on no board. |
 | `koujou update` | Pull the latest koujou and relink. |
 | `koujou uninstall` | Remove the links. Beads and your projects are untouched. |
 

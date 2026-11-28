@@ -13,6 +13,8 @@ Output: `raw.md` and `requirements.md` in the work order folder (location from `
 
 2. **Ground it.** On an existing project, read enough of the code and docs to know what exists, what the request touches, and what it would contradict (earlier decisions, existing behaviour). Many "questions for the user" are answered by the codebase; answer those yourself.
 
+   **When the request names a reference** ("like GitHub's", "the way Linear does it", a screenshot, a URL), look at the reference itself before writing a requirement about it: open it in a browser, read how it is built (the markup, the styles, the timings), and write what you measured into the requirements as numbers and behaviours ("one cell wide, exactly under the pointer; each cell holds, then shrinks into its centre over 0.5 s; 140 cells across the page"). A description from memory or from a screenshot gets the look and misses the behaviour: on the koujou-ui board the owner asked for GitHub's pixel trail, three builds guessed at it and were sent back, and the first build made after reading the page's own markup and styles was accepted. What cannot be measured (a 3D model, a licensed asset) is said so, with the nearest thing that can be built.
+
 3. **Find the gaps.** Work out what is still undecided and would change what gets built: who the user is, the exact behaviour at the edges, what is out of scope, what "done" looks like, constraints (performance, data, compatibility, cost, deadlines). Separate two kinds:
    - Things with a sensible default → choose it and record it as an assumption.
    - Things only the user can decide → ask. Batch them, at most a handful, each with your recommended answer. Don't ask what you could look up.

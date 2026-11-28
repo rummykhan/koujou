@@ -18,6 +18,8 @@ Read `FACTORY.md` first: `## Git policy` (push, integration, who merges, merge m
 
 The user approved the work at the plan gate; merging what that plan produced, once the checks pass, is part of what they approved, wherever the merge deploys. That is the point of the factory: hand it the work, and it is shipped. Where a profile still says "after approval", never read silence as approval.
 
+A small change made directly (the Direct lane, a fix after the epic shipped) does not need this stage by hand: from its own branch, with the gate green, `koujou ship [--bead <id>] [--deploy]` does steps 2 to 4 and the remote branch, reading the base, the merge method and the deploy command from the profile, and stops at the pull request where the profile says the user merges. On koujou-ui twelve such changes were each shipped with the same eight hand-typed steps.
+
 ## 1. Check that it is ready
 
 - No child of the epic (or issue in the pass) is open except those labelled `factory:awaiting-merge`, `factory:deferred` or `factory:stuck`; stuck ones are named in the PR as not included.
