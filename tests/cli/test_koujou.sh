@@ -3,6 +3,7 @@
 . "$(dirname "$0")/../lib/expect.sh"; . "$(dirname "$0")/../lib/todo.sh"
 command -v bd >/dev/null 2>&1 || { echo "  skip  bd (beads) is not installed"; exit 0; }
 WORK="$(mktemp -d)"; trap 'rm -rf "$WORK"' EXIT
+export KOUJOU_STATE="$WORK/state"   # never the real ~/.koujou: init adds every project it sets up to the board
 
 echo "  koujou init / doctor"
 mkdir "$WORK/new" && cd "$WORK/new" && git init -q -b main
