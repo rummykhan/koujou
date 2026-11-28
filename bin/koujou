@@ -155,7 +155,7 @@ cmd_board() { # the live kanban lives in its own package: koujou-ui
   elif [[ -f "$SRC/../koujou-ui/server/cli.js" ]]; then ui="node $SRC/../koujou-ui/server/cli.js"; fi
   if [[ -z "$ui" ]]; then
     say "The board is koujou-ui, a separate package. Install it once:"
-    say "  git clone https://github.com/rummykhan/koujou-ui && cd koujou-ui && npm install -g ."
+    say "  git clone https://github.com/koujou-ai/koujou-ui && cd koujou-ui && npm install -g ."
     say "then: koujou board start   (or: koujou board install, to keep it always running)"
     return 1
   fi

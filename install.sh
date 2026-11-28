@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Koujou (software factory) installer.
 #
-#   curl -fsSL https://raw.githubusercontent.com/rummykhan/koujou/main/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/koujou-ai/koujou/main/install.sh | bash
 #   or, from a clone:  ./install.sh
 #
 # What it does:
@@ -11,7 +11,7 @@
 # Safe to re-run. Remove with:  koujou uninstall
 set -euo pipefail
 
-REPO="${KOUJOU_REPO:-https://github.com/rummykhan/koujou.git}"
+REPO="${KOUJOU_REPO:-https://github.com/koujou-ai/koujou.git}"
 HOME_DIR="${KOUJOU_HOME:-$HOME/.koujou}"
 
 say() { printf '%s\n' "$*"; }

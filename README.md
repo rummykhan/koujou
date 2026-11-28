@@ -4,13 +4,13 @@
 
 **Platforms:** macOS, Linux
 
-[![License](https://img.shields.io/github/license/rummykhan/koujou)](LICENSE)
-[![Stars](https://img.shields.io/github/stars/rummykhan/koujou?style=flat)](https://github.com/rummykhan/koujou/stargazers)
-[![Last commit](https://img.shields.io/github/last-commit/rummykhan/koujou)](https://github.com/rummykhan/koujou/commits/main)
+[![License](https://img.shields.io/github/license/koujou-ai/koujou)](LICENSE)
+[![Stars](https://img.shields.io/github/stars/koujou-ai/koujou?style=flat)](https://github.com/koujou-ai/koujou/stargazers)
+[![Last commit](https://img.shields.io/github/last-commit/koujou-ai/koujou)](https://github.com/koujou-ai/koujou/commits/main)
 [![Built for Claude Code](https://img.shields.io/badge/built%20for-Claude%20Code-D97757)](https://claude.com/claude-code)
 [![Tasks by beads](https://img.shields.io/badge/tasks%20by-beads-4B32C3)](https://github.com/gastownhall/beads)
 [![QA with Playwright](https://img.shields.io/badge/QA%20with-Playwright-2EAD33)](https://playwright.dev)
-[![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen)](https://github.com/rummykhan/koujou/pulls)
+[![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen)](https://github.com/koujou-ai/koujou/pulls)
 
 *Koujou* (工場, kōjō) is Japanese for "factory". It turns a raw request into requirements, a design and a dependency graph of tasks, then runs an orchestrated swarm of builder, reviewer and QA agents in parallel git worktrees until the work is validated. You approve at the gates; the factory does the rest, and improves itself after every run.
 
@@ -23,7 +23,7 @@
 
 ```bash
 # Install koujou (system-wide; also installs beads if you don't have it)
-curl -fsSL https://raw.githubusercontent.com/rummykhan/koujou/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/koujou-ai/koujou/main/install.sh | bash
 
 # Wire up YOUR project
 cd your-project
@@ -51,7 +51,7 @@ Then give it work:
 Give your agent this repository and it can do the whole thing. The steps it should run:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/rummykhan/koujou/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/koujou-ai/koujou/main/install.sh | bash
 ```
 
 ```bash
@@ -72,7 +72,7 @@ koujou update
 
 * **Idea to shipped:** requirements, system design, epics and tasks, build, review, QA, deploy, validation, bug triage.
 * **One human gate, then shipped:** spec, design and plan run back to back and you approve them together, once. Then the factory builds, validates, opens the pull request and merges it as soon as it is mergeable, without asking again. Small work an existing pattern settles needs no gate at all.
-* **A live board instead of "where are we?":** [koujou-ui](https://github.com/rummykhan/koujou-ui) (`koujou board install`) is an always-running kanban of every project, from backlog to deployed, with live agents and anything waiting on you; runs start it and give you the link, never end a turn without something set to wake them, and send a push notification when they need you or finish.
+* **A live board instead of "where are we?":** [koujou-ui](https://github.com/koujou-ai/koujou-ui) (`koujou board install`) is an always-running kanban of every project, from backlog to deployed, with live agents and anything waiting on you; runs start it and give you the link, never end a turn without something set to wake them, and send a push notification when they need you or finish.
 * **Direct lane for live work:** deploys, migrations, recoveries and few-line fixes are done by the session itself, end to end, with no factory stages, because an agent would mostly wait on the live system.
 * **Lean, inside a budget:** a few builders (three at most) on a few larger tasks, each in its own git worktree. Every run gets a budget of agents and working time (by default three agents and an hour per task); `koujou spawned` checks it on every agent and stops the run to ask you before going over. The factory has to beat you working by hand with one agent, and every retro says whether it did.
 * **Merge queue:** finished branches land one at a time; the others rebase onto the result, and the agent that wrote a change resolves its own conflicts.
@@ -103,7 +103,7 @@ In your terminal:
 | `koujou accept --red <task> --base <ref>` | Prove the task's tests fail without its change (code taken back, tests kept). Replaces the per-task reviewer's hollow-test check. |
 | `koujou times <epic-id>` | Time per task (build, review, queue), bounces, rebases and agents used. |
 | `koujou ready <epic-id>` | The tasks of a run that can start now. Like `bd ready`, but a task that has landed and stays open until you merge counts as done, so the next wave shows up. Also lists what is in flight and for how long, and flags a worker that has been quiet far longer than any build so far. |
-| `koujou board start\|install\|tui` | The live kanban of every project (Backlog, Active, In progress, Code review, Merged, Deployed, Closed), from the separate package [koujou-ui](https://github.com/rummykhan/koujou-ui). `install` keeps it always running; `koujou init` puts each project on it. |
+| `koujou board start\|install\|tui` | The live kanban of every project (Backlog, Active, In progress, Code review, Merged, Deployed, Closed), from the separate package [koujou-ui](https://github.com/koujou-ai/koujou-ui). `install` keeps it always running; `koujou init` puts each project on it. |
 | `koujou status [<epic-id>]` | One screen: runs in progress, tasks, budget, live agents and any past their time box, what waits on you, what is stuck, leftover processes in task worktrees. |
 | `koujou reported <id> --role <role>` | That agent has reported; it is no longer live (`--all` for every agent on the issue). `koujou spawned <id> --role <role> --resumed` marks a continued agent live again without counting it. |
 | `koujou budget <epic-id>` | The run's agents and working hours against its budget; exits 1 when over. |

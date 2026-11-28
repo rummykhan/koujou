@@ -1,6 +1,6 @@
 # koujou: working on the factory itself
 
-Koujou is a software factory for Claude Code: skills (`skills/factory-*`), worker definitions (`agents/factory-*.md`) and a small CLI (`bin/koujou`, `bin/koujou-*.py`). It is a public repository. The live board is a separate package, [koujou-ui](https://github.com/rummykhan/koujou-ui); see the workspace `AGENTS.md` one level up for how the two fit together.
+Koujou is a software factory for Claude Code: skills (`skills/factory-*`), worker definitions (`agents/factory-*.md`) and a small CLI (`bin/koujou`, `bin/koujou-*.py`). It is a public repository. The live board is a separate package, [koujou-ui](https://github.com/koujou-ai/koujou-ui); see the workspace `AGENTS.md` one level up for how the two fit together.
 
 ## Layout
 
