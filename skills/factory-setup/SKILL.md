@@ -24,7 +24,7 @@ Run `koujou init` in the project root (if the command is not on the PATH: `~/.ko
 ## 3. Beads
 
 - `.beads/` exists → keep it. `bd doctor` should be clean; `bd setup claude --check` should report the session hook installed (run `bd setup claude` if not).
-- `koujou init` created it → look at what `bd init` wrote (`git status`): it also creates or updates `AGENTS.md` and `CLAUDE.md` and installs the session-start hook that runs `bd prime`.
+- `koujou init` created it → it ran `bd init --skip-agents`, so beads wrote no instruction files of its own, and installed the `bd prime` session hook itself. bd still makes a commit, with whatever git identity applies here; `koujou init` prints it. If the project commits under another identity (a noreply address on a public repository), amend that commit before anything is pushed.
 - If the repo has a git remote and the user wants beads shared across machines, that is `bd dolt push`; leave it off until they ask.
 
 ## 4. FACTORY.md

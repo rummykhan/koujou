@@ -11,7 +11,11 @@ check "init creates .beads, FACTORY.md, AGENTS.md, CLAUDE.md" test -d .beads -a 
 check "AGENTS.md has exactly one factory block" test "$(grep -c 'BEGIN SOFTWARE FACTORY' AGENTS.md)" = 1
 check "CLAUDE.md imports AGENTS.md" grep -qx '@AGENTS.md' CLAUDE.md
 check "init leaves the factory's own files uncommitted" bash -c 'git status --porcelain | grep -q "FACTORY.md" && git status --porcelain | grep -q "AGENTS.md"'
+check "init adds no beads blocks or other tools' files (bd init --skip-agents)" bash -c '! grep -q "BEGIN BEADS" AGENTS.md CLAUDE.md && test ! -e .codex -a ! -e .cursor -a ! -e .agents'
+check "init installs the bd prime session hook" grep -q 'bd prime' .claude/settings.json
+check "init names the identity bd committed with" bash -c 'd=$(mktemp -d) && cd "$d" && git init -q && KOUJOU_STATE="$d/state" "$0" init 2>&1 | grep -q "bd committed .* as "' "$TESTS_DIR/../bin/koujou"
 koujou init >/dev/null 2>&1
+check "init twice leaves one session hook" test "$(grep -c 'bd prime' .claude/settings.json)" = 1
 check "init twice leaves one block and one import" test "$(grep -c 'BEGIN SOFTWARE FACTORY' AGENTS.md)$(grep -cx '@AGENTS.md' CLAUDE.md)" = 11
 check "doctor fails while FACTORY.md is still the template" bash -c '! "$0" doctor' "$TESTS_DIR/../bin/koujou"
 check "doctor says what to run" bash -c '"$0" doctor 2>&1 | grep -q "/factory-setup"' "$TESTS_DIR/../bin/koujou"

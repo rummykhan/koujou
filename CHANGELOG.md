@@ -2,6 +2,16 @@
 
 Changes the factory made to itself, each tied to the run that taught it. `factory-retro` appends here and checks earlier entries' expected effects against later runs.
 
+## 2026-11-27 — koujou-ui / kou-3qa (project home)
+
+First run on koujou-ui: lane M, 2 tasks, 4 agents of 10, 24 min from start to validated, shipped as PR #1. Earlier entries checked: one gate (confirmed: one approval, merged without asking), never idle (confirmed: no "continue" needed), `accept --red` (confirmed: ran on both tasks, and the orchestrator used the same check on its own fix).
+
+- **bin/koujou (init), factory-setup, factory-adopt**: `bd init --skip-agents`, the `bd prime` session hook written by koujou itself, and the identity bd committed with printed. Because plain `bd init` added `.agents/`, `.codex/`, `.cursor/` and two beads blocks (one saying "do not commit") to a public repo, and committed under the global identity instead of the project's noreply one. Expected effect: `koujou init` adds only the factory's files and the hook; an identity mismatch is caught before a push.
+- **factory-plan, profile template**: the node acceptance command names files and passes `--test-force-exit`, and the plan must read why the stored command fails. Because `node --test … test/` is not valid on Node 22 and a filtered run hung on a file whose hooks start a server; the plan "failed red" for the wrong reason and both builders lost time on it. Expected effect: no builder reports a broken acceptance command.
+- **factory-run**: a `security`/`review` task that lands last gets its lens in the epic review instead of a reviewer of its own. Because the two would read nearly the same diff; folded on kou-3qa, the epic review still found the run's one security defect (DNS rebinding past the header guard). Expected effect: one agent fewer when such a task lands last, no defect missed.
+- **factory-ship**: delete the remote branch with git, not `gh pr merge --delete-branch`, which errors from a worktree; prefer a merge commit when the user's base holds unpushed commits. Because both bit this run. Expected effect: a clean merge step from the epic worktree.
+- **agents/factory-validator**: use a Playwright browser of its own when other agents may share the MCP browser. Because a builder's checks navigated the validator's page mid-run. Expected effect: no validator evidence spoiled by another agent.
+
 ## 2026-11-27 — one gate, merge when mergeable, a live board, never idle
 
 The owner: the factory should take the work once and ship it. "Plan mean initial plan: vision/requirements, design, plan and go"; "it should PR and once PR is mergable merge it, it shouldn't care where it's going"; and a board instead of "continue / where are we / resume".

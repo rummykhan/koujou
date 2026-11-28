@@ -64,10 +64,13 @@ A red check is a failure of this stage, not noise. Read the log. If the branch c
 When the pull request is mergeable (`gh pr view <n> --json mergeable,mergeStateStatus`: `MERGEABLE` and the checks green), merge it. Tell the user in the same message as the deploy result: the PR link, what it triggered, anything not included, and the rollback. (Only where the profile says "after approval": show that first and wait for the yes.)
 
 ```bash
-gh pr merge <number> --<merge|squash|rebase per the profile> --delete-branch --match-head-commit <the sha that was checked>
+gh pr merge <number> --<merge|squash|rebase per the profile> --match-head-commit <the sha that was checked>
+git push origin --delete factory/<epic-id>
 ```
 
-`--match-head-commit` makes the merge fail if the branch moved after the checks you showed.
+`--match-head-commit` makes the merge fail if the branch moved after the checks you showed. Delete the remote branch with git, not `gh pr merge --delete-branch`: from the epic worktree that flag also tries to check out the base, which the user's checkout holds, and reports an error after the merge has already happened.
+
+Pick the merge method with the user's checkout in mind: when its base branch holds commits the remote does not have yet (the setup commits of a project adopted in this run), a squash leaves it diverged from the remote, and bringing it up to date would need a reset in a checkout the factory does not touch. A merge commit lets it fast-forward.
 
 Stamp every issue the pull request carries, so the board moves them on: `bd update <id> --set-metadata pr_merged_at=$(date -u +%FT%TZ)` now, and `deployed_at` once the post-deploy check in step 5 has passed, before they are closed.
 

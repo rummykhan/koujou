@@ -82,9 +82,32 @@ cmd_init() {
   if [[ -d .beads ]]; then say "  ok    .beads/ (existing database kept)"
   else
     prefix="${1:-$(printf '%s' "$name" | tr -cd '[:alpha:]' | tr '[:upper:]' '[:lower:]' | cut -c1-3)}"
-    bd init --non-interactive --prefix "${prefix:-fx}" >/dev/null 2>&1
+    # --skip-agents: without it bd also writes .agents/, .codex/, .cursor/ and two beads blocks into AGENTS.md
+    # (one says "do not commit", against builders that commit on task branches); the factory block covers beads.
+    bd init --non-interactive --skip-agents --prefix "${prefix:-fx}" >/dev/null 2>&1
     say "  new   .beads/ (issue prefix: ${prefix:-fx})"
+    # bd commits its own files with whatever identity git has here, often the global one: say which, so a project
+    # with its own identity (a noreply address on a public repo) can amend it before anything is pushed.
+    if [[ "$(git log -1 --format=%s 2>/dev/null)" == "bd init"* ]]; then
+      say "  note  bd committed $(git log -1 --format='%h as %an <%ae>'); amend before pushing if this project uses another identity"
+    fi
   fi
+
+  # the session hook that runs `bd prime` (bd setup claude would also write its own CLAUDE.md block)
+  python3 - <<'PY'
+import json, os
+p = ".claude/settings.json"
+try: s = json.load(open(p))
+except (OSError, ValueError): s = {}
+if "bd prime" not in json.dumps(s):
+    s.setdefault("hooks", {}).setdefault("SessionStart", []).append(
+        {"matcher": "", "hooks": [{"type": "command", "command": "bd prime --hook-json"}]})
+    os.makedirs(".claude", exist_ok=True)
+    json.dump(s, open(p, "w"), indent=2)
+    print("  new   .claude/settings.json session hook (bd prime)")
+else:
+    print("  ok    .claude/settings.json session hook (bd prime)")
+PY
 
   # FACTORY.md
   if [[ -f FACTORY.md ]]; then say "  ok    FACTORY.md (kept)"

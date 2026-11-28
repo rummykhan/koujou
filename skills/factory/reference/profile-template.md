@@ -66,7 +66,7 @@ Beyond the product's own modules, give a row to what a change can break outside 
 ## QA
 
 - Acceptance suite: `<directory, runner, the one command that runs it, and whether the gate includes it>`
-- One task's tests: `<how to run only the tests named with a task id, per runner, e.g. node --test --test-name-pattern "<id>"; cd e2e && npx playwright test -g "<id>">`
+- One task's tests: `<how to run only the tests named with a task id, per runner, e.g. node --test --test-force-exit --test-name-pattern "<id>" test/*.test.js; cd e2e && npx playwright test -g "<id>">`
 - Browser testing: <Playwright available? how it is installed here; base URL and port the suite expects; how the suite starts the product>
 - Test accounts and seed data: <how to get a signed-in session without real credentials; where test secrets live, by variable name>
 - Evidence: `<work order>/evidence/`

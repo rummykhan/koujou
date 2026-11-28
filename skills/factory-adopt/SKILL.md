@@ -55,7 +55,7 @@ Start from `~/.claude/skills/factory/reference/profile-template.md` and fill eve
 ## 4. Beads
 
 - Present → keep the database and its conventions. Note in the profile where they differ from `~/.claude/skills/factory/reference/beads.md`. Do not re-init.
-- Absent → ask before running `bd init`, and say what it does, because it is more than a database: it makes a commit of its own on the current branch, points git's `core.hooksPath` at `.beads/hooks`, and adds agent-instruction files of its own (`.claude/settings.json`, `.agents/`, `.codex/`, `.cursor/` at the time of writing) whose rules may disagree with the profile ("do not commit without clear authority" against builders that commit on their task branches). Tell the owner what appeared, and settle any such disagreement in the profile in so many words.
+- Absent → ask before initialising it, and say what that does, because it is more than a database: bd makes a commit of its own on the current branch, with whatever git identity applies (check it against the project's), and points git's `core.hooksPath` at `.beads/hooks`. Initialise through `koujou init`, which passes `--skip-agents`: plain `bd init` also writes `.agents/`, `.codex/`, `.cursor/` and its own blocks into `AGENTS.md`, one of which says "do not commit without clear authority", against builders that commit on their task branches. If such a block is already there, settle the disagreement in the profile in so many words.
 
 Report anything unhealthy you noticed (stale in-progress claims, issues with no acceptance criteria, a roadmap that disagrees with beads) but don't fix it unasked.
 
